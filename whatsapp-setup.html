@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Skill - מדריך התקנה מפורט</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green-primary: #22C55E;
+      --green-glow: rgba(34, 197, 94, 0.4);
+      --green-soft: rgba(34, 197, 94, 0.1);
+      --bg-darkest: #0a0f0d;
+      --bg-dark: #111827;
+      --bg-card: #1a2332;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-glow: rgba(34, 197, 94, 0.3);
+      --yellow: #fbbf24;
+      --red: #ef4444;
+      --blue: #3b82f6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: var(--bg-darkest);
+      color: var(--text-primary);
+      line-height: 1.8;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      margin-bottom: 32px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover { color: var(--green-primary); }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .skill-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+    }
+
+    .difficulty {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--green-soft);
+      border-radius: 100px;
+      color: var(--green-primary);
+      margin-top: 16px;
+      font-size: 0.9rem;
+    }
+
+    .section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    .section h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section h2 .num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: var(--green-primary);
+      border-radius: 50%;
+      font-size: 1rem;
+    }
+
+    .section h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 24px 0 12px;
+      color: var(--green-primary);
+    }
+
+    p {
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .highlight {
+      background: var(--green-soft);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: var(--green-primary);
+      font-weight: 500;
+    }
+
+    .warning {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      display: flex;
+      gap: 12px;
+    }
+
+    .warning-icon { font-size: 1.5rem; }
+    .warning p { margin: 0; color: var(--yellow); }
+
+    .info {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      display: flex;
+      gap: 12px;
+    }
+
+    .info p { margin: 0; color: var(--blue); }
+
+    .steps-list {
+      list-style: none;
+      counter-reset: step;
+    }
+
+    .steps-list > li {
+      position: relative;
+      padding: 16px 0;
+      padding-inline-start: 48px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .steps-list > li:last-child { border-bottom: none; }
+
+    .steps-list > li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      inset-inline-start: 0;
+      top: 16px;
+      width: 28px;
+      height: 28px;
+      background: var(--bg-dark);
+      border: 2px solid var(--green-primary);
+      border-radius: 50%;
+      text-align: center;
+      line-height: 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--green-primary);
+    }
+
+    .screenshot {
+      background: var(--bg-dark);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0;
+      text-align: center;
+    }
+
+    .screenshot img {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+
+    .screenshot-placeholder {
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-dark));
+      border-radius: 8px;
+      padding: 40px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    code {
+      background: var(--bg-dark);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'Menlo', monospace;
+      font-size: 0.9rem;
+      color: var(--green-primary);
+      direction: ltr;
+      display: inline-block;
+    }
+
+    .code-block {
+      background: var(--bg-dark);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0;
+      overflow-x: auto;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .code-block code {
+      background: none;
+      padding: 0;
+      display: block;
+      white-space: pre;
+      line-height: 1.6;
+    }
+
+    .code-block .comment { color: var(--text-muted); }
+    .code-block .key { color: var(--yellow); }
+    .code-block .value { color: var(--green-primary); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--green-primary) 0%, #16a34a 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px var(--green-glow);
+    }
+
+    .btn-secondary {
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .feature {
+      background: var(--bg-dark);
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .feature-icon { font-size: 2rem; margin-bottom: 8px; }
+    .feature-title { font-weight: 600; margin-bottom: 4px; }
+    .feature-desc { font-size: 0.85rem; color: var(--text-secondary); }
+
+    .pricing-note {
+      background: linear-gradient(135deg, var(--green-soft), transparent);
+      border: 1px solid var(--border-glow);
+      border-radius: 16px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+
+    .pricing-note h3 {
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: right;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    th {
+      background: var(--bg-dark);
+      font-weight: 600;
+    }
+
+    td code {
+      font-size: 0.8rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-subtle);
+      margin-top: 48px;
+    }
+
+    footer a {
+      color: var(--green-primary);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="../index.html" class="back-link">
+      → חזרה לדף הראשי
+    </a>
+
+    <div class="hero">
+      <div class="skill-icon">📱</div>
+      <h1>WhatsApp Skill</h1>
+      <p class="subtitle">שלחו הודעות, תמונות והודעות קוליות בוואטסאפ באופן אוטומטי</p>
+      <div class="difficulty">⏱️ זמן התקנה: 10-15 דקות</div>
+    </div>
+
+    <!-- מה הסקיל עושה -->
+    <div class="section">
+      <h2>מה הסקיל הזה עושה?</h2>
+      <p>הסקיל הזה מאפשר לקלוד לשלוח הודעות בוואטסאפ בשמכם. אתם פשוט אומרים לו מה לשלוח ולמי - והוא עושה את זה!</p>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">💬</div>
+          <div class="feature-title">הודעות טקסט</div>
+          <div class="feature-desc">שליחת הודעות לאנשים או קבוצות</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🖼️</div>
+          <div class="feature-title">תמונות</div>
+          <div class="feature-desc">שליחת תמונות עם כיתוב</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🎤</div>
+          <div class="feature-title">הודעות קוליות</div>
+          <div class="feature-desc">שליחת הקלטות קוליות</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">👥</div>
+          <div class="feature-title">קבוצות</div>
+          <div class="feature-desc">קבלת רשימת חברי קבוצה</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- דרישות מקדימות -->
+    <div class="section">
+      <h2><span class="num">1</span> מה צריך לפני שמתחילים?</h2>
+
+      <h3>חשבון Green API (חינם לנסיון)</h3>
+      <p>הסקיל משתמש בשירות שנקרא <span class="highlight">Green API</span>. זה שירות שמאפשר לשלוח הודעות וואטסאפ דרך קוד.</p>
+
+      <div class="pricing-note">
+        <h3>💰 כמה זה עולה?</h3>
+        <p>Green API נותנים <strong>3 צ'אטים חינם לחודש</strong> - אלו 3 הצ'אטים הראשונים שתשלחו אליהם הודעה באותו חודש קלנדרי (מתאפס ב-1 לכל חודש). גם קבלת הודעות מוגבלת ל-3 צ'אטים ראשונים בחודש.</p>
+        <p>המינוי בתשלום עולה <strong>$12 לחודש</strong> (חשבון Business).</p>
+      </div>
+
+      <div class="warning">
+        <span class="warning-icon">📌</span>
+        <p><strong>הגבלה חשובה:</strong> מותר רק מופע (Instance) חינמי אחד בכל חשבון. אם תמחקו את המופע החינמי - לא תוכלו ליצור מופע חינמי חדש!</p>
+      </div>
+
+      <h3>טלפון עם וואטסאפ</h3>
+      <p>צריך טלפון נייד עם וואטסאפ מחובר לאינטרנט. הטלפון צריך להישאר מחובר כדי שההודעות יישלחו.</p>
+
+      <h3>🎤 להודעות קוליות: התקנת ffmpeg</h3>
+      <p>כדי לשלוח הודעות קוליות, צריך להתקין את <span class="highlight">ffmpeg</span> במחשב. זה כלי שממיר קבצי שמע לפורמט OGG שמתאים לוואטסאפ.</p>
+
+      <div class="code-block">
+        <code><span class="comment"># macOS (עם Homebrew)</span>
+brew install ffmpeg
+
+<span class="comment"># Ubuntu/Debian</span>
+sudo apt update && sudo apt install ffmpeg
+
+<span class="comment"># Windows (עם Chocolatey)</span>
+choco install ffmpeg
+
+<span class="comment"># Windows (עם winget)</span>
+winget install ffmpeg
+
+<span class="comment"># בדיקה שההתקנה הצליחה</span>
+ffmpeg -version</code>
+      </div>
+
+      <div class="info">
+        <span class="warning-icon">💡</span>
+        <p><strong>טיפ:</strong> אם אין לכם Homebrew (ב-macOS), התקינו אותו קודם עם הפקודה שבאתר <a href="https://brew.sh" target="_blank" style="color: var(--blue);">brew.sh</a></p>
+      </div>
+
+      <div class="warning">
+        <span class="warning-icon">⚠️</span>
+        <p><strong>שימו לב:</strong> השירות הזה שולח הודעות מחשבון הוואטסאפ האישי שלכם. השתמשו בו באחריות ואל תשלחו ספאם!</p>
+      </div>
+    </div>
+
+    <!-- יצירת חשבון -->
+    <div class="section">
+      <h2><span class="num">2</span> יצירת חשבון Green API</h2>
+
+      <ol class="steps-list">
+        <li>
+          <strong>היכנסו לאתר Green API</strong>
+          <p>לחצו על הכפתור למטה כדי להיכנס לאתר:</p>
+          <a href="https://green-api.com" target="_blank" class="btn btn-primary" style="margin-top: 8px;">
+            🌐 היכנסו ל-Green API
+          </a>
+        </li>
+
+        <li>
+          <strong>לחצו על "Sign Up" (הרשמה)</strong>
+          <p>בפינה הימנית העליונה יש כפתור ירוק. לחצו עליו.</p>
+        </li>
+
+        <li>
+          <strong>מלאו את הפרטים</strong>
+          <p>הכניסו אימייל וסיסמה. אפשר גם להירשם עם Google.</p>
+        </li>
+
+        <li>
+          <strong>אשרו את האימייל</strong>
+          <p>תקבלו מייל אישור. לחצו על הקישור שבו.</p>
+        </li>
+      </ol>
+    </div>
+
+    <!-- יצירת Instance -->
+    <div class="section">
+      <h2><span class="num">3</span> יצירת Instance וחיבור וואטסאפ</h2>
+
+      <p>אחרי ההרשמה תגיעו לדף הניהול (Console). עכשיו נחבר את הוואטסאפ שלכם:</p>
+
+      <ol class="steps-list">
+        <li>
+          <strong>יצירת Instance חדש</strong>
+          <p>בדף הראשי של ה-Console, לחצו על <span class="highlight">Create Instance</span> (יצירת מופע חדש).</p>
+        </li>
+
+        <li>
+          <strong>בחרו Developer Instance</strong>
+          <p>זהו המופע החינמי. (חשבון Business הוא בתשלום)</p>
+        </li>
+
+        <li>
+          <strong>סרקו QR Code</strong>
+          <p>יופיע קוד QR על המסך. עכשיו:</p>
+          <ul style="margin-top: 8px; padding-right: 20px; color: var(--text-secondary);">
+            <li>פתחו את וואטסאפ בטלפון</li>
+            <li>לכו להגדרות ← מכשירים מקושרים</li>
+            <li>לחצו על "קשר מכשיר"</li>
+            <li>סרקו את הקוד שעל המסך</li>
+          </ul>
+        </li>
+
+        <li>
+          <strong>המתינו לחיבור</strong>
+          <p>אחרי כמה שניות תראו סטטוס <span class="highlight">Authorized</span> (מורשה). מעולה!</p>
+        </li>
+      </ol>
+
+      <div class="info">
+        <span class="warning-icon">💡</span>
+        <p><strong>טיפ:</strong> אם הקוד פג תוקף, פשוט רעננו את הדף ותקבלו קוד חדש.</p>
+      </div>
+    </div>
+
+    <!-- העתקת המפתחות -->
+    <div class="section">
+      <h2><span class="num">4</span> העתקת המפתחות שלכם</h2>
+
+      <p>עכשיו נעתיק את המידע שקלוד צריך כדי לשלוח הודעות בשמכם:</p>
+
+      <ol class="steps-list">
+        <li>
+          <strong>היכנסו ל-Instance שיצרתם</strong>
+          <p>לחצו על ה-Instance ברשימה כדי לראות את הפרטים שלו.</p>
+        </li>
+
+        <li>
+          <strong>מצאו את הפרטים הבאים</strong>
+          <p>בדף ה-Instance תמצאו:</p>
+          <table>
+            <tr>
+              <th>שם השדה</th>
+              <th>מה זה</th>
+              <th>איפה זה</th>
+            </tr>
+            <tr>
+              <td><code>API URL</code></td>
+              <td>כתובת השרת</td>
+              <td>בראש הדף, נראה כמו: https://7103.api.greenapi.com</td>
+            </tr>
+            <tr>
+              <td><code>Instance ID</code></td>
+              <td>מזהה ייחודי</td>
+              <td>מספר כמו: 7103123456</td>
+            </tr>
+            <tr>
+              <td><code>API Token</code></td>
+              <td>מפתח סודי</td>
+              <td>רצף ארוך של אותיות ומספרים</td>
+            </tr>
+          </table>
+        </li>
+
+        <li>
+          <strong>העתיקו כל אחד מהם</strong>
+          <p>יש כפתור העתקה ליד כל שדה. לחצו עליו ושמרו את הערכים בצד (בקובץ טקסט למשל).</p>
+        </li>
+      </ol>
+
+      <div class="warning">
+        <span class="warning-icon">🔒</span>
+        <p><strong>חשוב מאוד:</strong> ה-API Token הוא כמו סיסמה! אל תשתפו אותו עם אף אחד ואל תעלו אותו לאינטרנט.</p>
+      </div>
+    </div>
+
+    <!-- הערה חשובה על פרטיות -->
+    <div class="section" style="border: 2px solid var(--yellow); background: rgba(251, 191, 36, 0.05);">
+      <h2>⚠️ לפני שממשיכים - הגדרת פרטיות</h2>
+
+      <p>בשלב הבא תזינו מפתחות API. אלה כמו סיסמאות, ולכן <strong>חשוב לוודא שהגדרות הפרטיות מוגדרות נכון</strong> בקלוד קוד.</p>
+
+      <div class="warning">
+        <span class="warning-icon">🔐</span>
+        <p>אם עדיין לא עשיתם את זה, עברו קודם למדריך <a href="../index.html#privacy" style="color: var(--yellow);">הגדרות פרטיות</a> וודאו שכיביתם את האפשרות לאנתרופיק להתאמן על השיחות שלכם.</p>
+      </div>
+    </div>
+
+    <!-- הגדרת קובץ .env -->
+    <div class="section">
+      <h2><span class="num">5</span> הגדרת הסקיל במחשב</h2>
+
+      <p>עכשיו נשים את המפתחות במקום שקלוד יוכל להשתמש בהם. <strong>הכי קל - לבקש מקלוד קוד לעשות את זה בשבילכם!</strong></p>
+
+      <h3>🪄 הדרך הקלה - בקשו מקלוד</h3>
+      <p>פתחו את קלוד קוד ואמרו לו:</p>
+      <div class="code-block">
+        <code>צור קובץ .env בתיקייה ~/.claude/skills/whatsapp/scripts עם התוכן הבא:
+GREEN_API_URL=https://7103.api.greenapi.com
+GREEN_API_INSTANCE=<span class="value">המספר_שהעתקתם</span>
+GREEN_API_TOKEN=<span class="value">הטוקן_הארוך_שהעתקתם</span></code>
+      </div>
+      <p>קלוד ייצור את הקובץ במקום הנכון!</p>
+
+      <h3>התקנת ספריות</h3>
+      <p>אחרי שהקובץ נוצר, בקשו מקלוד:</p>
+      <div class="code-block">
+        <code>הרץ npm install בתיקייה ~/.claude/skills/whatsapp/scripts</code>
+      </div>
+
+      <div class="info">
+        <span class="warning-icon">📝</span>
+        <p><strong>דוגמה לערכים אמיתיים:</strong></p>
+      </div>
+
+      <div class="code-block">
+        <code><span class="key">GREEN_API_URL</span>=<span class="value">https://7103.api.greenapi.com</span>
+<span class="key">GREEN_API_INSTANCE</span>=<span class="value">7103845678</span>
+<span class="key">GREEN_API_TOKEN</span>=<span class="value">a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9</span></code>
+      </div>
+    </div>
+
+    <!-- בדיקה -->
+    <div class="section">
+      <h2><span class="num">6</span> בדיקה שהכל עובד</h2>
+
+      <p>הפעילו מחדש את קלוד קוד ונסו לשלוח הודעת בדיקה:</p>
+
+      <div class="code-block">
+        <code><span class="comment"># פתחו שיחה חדשה עם קלוד ואמרו:</span>
+שלח לי הודעת בדיקה בוואטסאפ למספר 0501234567</code>
+      </div>
+
+      <p>קלוד ישתמש בסקיל וישלח את ההודעה. אם הכל עובד - מזל טוב! 🎉</p>
+
+      <div class="info">
+        <span class="warning-icon">🔧</span>
+        <p><strong>לא עובד?</strong> בדקו שהטלפון מחובר לאינטרנט ושהמפתחות הועתקו נכון.</p>
+      </div>
+    </div>
+
+    <!-- דוגמאות שימוש -->
+    <div class="section">
+      <h2>דוגמאות לשימוש</h2>
+
+      <p>הנה כמה דברים שתוכלו לבקש מקלוד:</p>
+
+      <div class="code-block">
+        <code><span class="comment"># שליחת הודעה פשוטה</span>
+"שלח הודעה לדני במספר 0521234567 שאני מאחר ב-10 דקות ותגיד לי כשנשלח"
+
+<span class="comment"># שליחת תמונה</span>
+"שלח את התמונה poster.jpg לקבוצה של העבודה ותודיע לי כשזה מוכן"
+
+<span class="comment"># הודעה לכל חברי קבוצה</span>
+"שלח הודעה אישית לכל חברי הקבוצה עם הקישור לסדנה ותראה לי את ההתקדמות"
+
+<span class="comment"># קבלת רשימת חברים</span>
+"תן לי את רשימת המספרים מקבוצת הוואטסאפ של הקורס ותציג לי אותם"</code>
+      </div>
+    </div>
+
+    <!-- פתרון בעיות -->
+    <div class="section">
+      <h2>🔧 פתרון בעיות נפוצות</h2>
+
+      <h3>הודעות לא נשלחות</h3>
+      <ul style="color: var(--text-secondary); padding-right: 20px;">
+        <li>וודאו שהטלפון מחובר לאינטרנט</li>
+        <li>בדקו שה-Instance עדיין מחובר ב-Console של Green API</li>
+        <li>נסו לסרוק מחדש את ה-QR Code</li>
+      </ul>
+
+      <h3>שגיאת "Missing credentials"</h3>
+      <ul style="color: var(--text-secondary); padding-right: 20px;">
+        <li>וודאו שקובץ .env נמצא בתיקייה הנכונה</li>
+        <li>בדקו שאין רווחים מיותרים במפתחות</li>
+        <li>וודאו ששמות המשתנים כתובים נכון (עם קו תחתון)</li>
+      </ul>
+
+      <h3>ההודעה הגיעה אבל לא במבנה הנכון</h3>
+      <ul style="color: var(--text-secondary); padding-right: 20px;">
+        <li>נסו להיות יותר ספציפיים בבקשה מקלוד</li>
+        <li>ציינו בדיוק מה רוצים שיהיה כתוב בהודעה</li>
+      </ul>
+
+      <h3>🎤 הודעות קוליות לא עובדות</h3>
+      <ul style="color: var(--text-secondary); padding-right: 20px;">
+        <li>וודאו ש-ffmpeg מותקן במחשב (הריצו <code>ffmpeg -version</code> לבדיקה)</li>
+        <li>אם לא מותקן, עקבו אחרי הוראות ההתקנה בסעיף "דרישות מקדימות"</li>
+        <li>לאחר התקנת ffmpeg, נסו שוב לשלוח את ההודעה הקולית</li>
+      </ul>
+    </div>
+
+    <div class="cta-buttons" style="justify-content: center; margin-top: 48px;">
+      <a href="../index.html" class="btn btn-secondary">← חזרה לדף הראשי</a>
+      <a href="https://console.green-api.com" target="_blank" class="btn btn-primary">🔧 פתחו את Green API Console</a>
+    </div>
+
+    <footer>
+      <p>יש שאלות? פתחו Issue ב-<a href="https://github.com/aviz85/claude-skills-library" target="_blank">GitHub</a></p>
+    </footer>
+  </div>
+</body>
+</html>
