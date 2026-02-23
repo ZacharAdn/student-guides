@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>תיקון עברית ב-Windows Terminal - מדריך התקנה</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: #1a1a2e; line-height: 1.7; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 1.8em; margin-bottom: 8px; color: #0c87f2; }
+    h2 { font-size: 1.4em; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 2px solid #0c87f2; color: #1a1a2e; }
+    h3 { font-size: 1.1em; margin: 20px 0 10px; color: #333; }
+    p, li { margin-bottom: 8px; }
+    .subtitle { color: #666; margin-bottom: 30px; }
+    .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; border: 1px solid #e0e0e0; }
+    .card-green { border-color: #22c55e; background: #f0fdf4; }
+    .card-yellow { border-color: #eab308; background: #fefce8; }
+    .card-red { border-color: #ef4444; background: #fef2f2; }
+    .step { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+    .step-num { background: #0c87f2; color: #fff; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+    .step p { padding-top: 4px; }
+    .btn-download { display: inline-block; background: #0c87f2; color: #fff; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-size: 1.1em; font-weight: bold; margin: 16px 0; text-align: center; width: 100%; }
+    .btn-download:hover { background: #0a6fd4; }
+    .img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .img-grid.single { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
+    .img-box { border-radius: 8px; overflow: hidden; border: 1px solid #ddd; background: #fff; }
+    .img-box img { width: 100%; display: block; }
+    .img-box .caption { text-align: center; padding: 6px; font-size: 0.85em; color: #666; }
+    .terminal-demo { background: #1a1a2e; border-radius: 12px; padding: 16px; margin: 12px 0; direction: ltr; }
+    .terminal-dots { display: flex; gap: 6px; margin-bottom: 10px; }
+    .terminal-dots span { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #eab308; }
+    .dot-green { background: #22c55e; }
+    .terminal-text { font-family: 'Consolas', 'Courier New', monospace; color: #999; font-size: 0.9em; }
+    .terminal-text .white { color: #fff; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; color: #fff; }
+    .badge-red { background: #ef4444; }
+    .badge-green { background: #22c55e; }
+    ol { padding-right: 20px; }
+    .credit { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #888; font-size: 0.85em; }
+    .credit a { color: #0c87f2; text-decoration: none; }
+    @media (max-width: 600px) { .img-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <h1>תיקון עברית ב-Windows Terminal</h1>
+    <p class="subtitle">מדריך התקנת Terminal 1.18 — הגרסה האחרונה שמציגה עברית נכון</p>
+
+    <!-- Problem -->
+    <h2>הבעיה</h2>
+    <p>החל מגרסה 1.19 של Windows Terminal, טקסט בעברית מוצג <strong>הפוך</strong> ובלתי קריא. גרסה 1.18 היא הגרסה האחרונה שתומכת בעברית תקינה.</p>
+
+    <div class="img-grid">
+      <div>
+        <div style="text-align: center; margin-bottom: 6px;"><span class="badge badge-red">✗ לפני (גרסה 1.23)</span></div>
+        <div class="terminal-demo">
+          <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <div class="terminal-text">PS C:\&gt; <span class="white">םלוע םולש</span></div>
+        </div>
+        <p style="text-align:center; color:#ef4444; font-weight:bold; font-size:0.9em;">הטקסט הפוך ובלתי קריא</p>
+      </div>
+      <div>
+        <div style="text-align: center; margin-bottom: 6px;"><span class="badge badge-green">✓ אחרי (גרסה 1.18)</span></div>
+        <div class="terminal-demo">
+          <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <div class="terminal-text">PS C:\&gt; <span class="white">שלום עולם</span></div>
+        </div>
+        <p style="text-align:center; color:#22c55e; font-weight:bold; font-size:0.9em;">עברית מוצגת נכון!</p>
+      </div>
+    </div>
+
+    <!-- Installation -->
+    <h2>התקנה</h2>
+
+    <div class="card">
+      <h3>שלב 1 — הורדה והתקנה</h3>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <p>הורידו את קובץ ההתקנה:</p>
+      </div>
+
+      <a href="https://win-terminal-hebrew-118.base44.app/downloads/Microsoft.WindowsTerminal_1.18.10301.0_8wekyb3d8bbwe.msixbundle" download class="btn-download">⬇ הורדת Terminal 1.18</a>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <p>לחצו פעמיים על הקובץ שהורדתם ואשרו את ההתקנה (לחצו <strong>Reinstall</strong>):</p>
+      </div>
+
+      <div class="img-grid">
+        <div class="img-box">
+          <img src="https://win-terminal-hebrew-118.base44.app/assets/images/msix-file-118.png" alt="קובץ ההתקנה MSIX">
+          <div class="caption">קובץ ההתקנה</div>
+        </div>
+        <div class="img-box">
+          <img src="https://win-terminal-hebrew-118.base44.app/assets/images/install-dialog-118.png" alt="חלון ההתקנה - לחצו Reinstall">
+          <div class="caption">לחצו Reinstall</div>
+        </div>
+      </div>
+
+      <div class="img-grid single">
+        <div class="img-box">
+          <img src="https://win-terminal-hebrew-118.base44.app/assets/images/install-confirm-118.png" alt="אישור התקנה">
+          <div class="caption">אשרו את ההתקנה</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <p>זהו! לחצו קליק ימני בכל תיקייה ובחרו <strong>"Open in Terminal"</strong>:</p>
+      </div>
+
+      <div class="img-grid">
+        <div class="img-box">
+          <img src="https://win-terminal-hebrew-118.base44.app/assets/images/right-click-menu.png" alt="תפריט קליק ימני - Open in Terminal">
+          <div class="caption">קליק ימני → Open in Terminal</div>
+        </div>
+        <div class="img-box">
+          <img src="https://win-terminal-hebrew-118.base44.app/assets/images/claude-code-hebrewv2.png" alt="Claude Code עובד בעברית">
+          <div class="caption">Claude Code עובד בעברית!</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-green">
+      <p><strong>עברית תקינה!</strong> Terminal 1.18 מציג עברית נכון — לא הפוך.</p>
+    </div>
+
+    <!-- Troubleshooting: Button not working -->
+    <h2>פתרון בעיות</h2>
+
+    <div class="card card-yellow">
+      <h3>הכפתור "Open in Terminal" לא פותח טרמינל?</h3>
+      <p>במקרים נדירים אחרי התקנת גרסה ישנה, הכפתור מפסיק לעבוד. הפתרון — <strong>Reset לאפליקציה</strong>:</p>
+
+      <div class="step"><div class="step-num">1</div><p>פתחו <strong>Settings</strong> (מקש Windows + I)</p></div>
+
+      <div class="img-box" style="margin-bottom:16px;">
+        <img src="https://win-terminal-hebrew-118.base44.app/assets/images/reset-step1-start.png" alt="פתיחת Settings">
+        <div class="caption">פתחו Start → Settings</div>
+      </div>
+
+      <div class="step"><div class="step-num">2</div><p>לכו ל-<strong>Apps</strong></p></div>
+
+      <div class="img-box" style="max-width:300px; margin-bottom:16px;">
+        <img src="https://win-terminal-hebrew-118.base44.app/assets/images/reset-step2-apps.png" alt="Apps בהגדרות">
+        <div class="caption">בחרו Apps</div>
+      </div>
+
+      <div class="step"><div class="step-num">3</div><p>לחצו על <strong>Installed Apps</strong></p></div>
+
+      <div class="img-box" style="margin-bottom:16px;">
+        <img src="https://win-terminal-hebrew-118.base44.app/assets/images/reset-step3-installed.png" alt="Installed Apps">
+        <div class="caption">לחצו Installed Apps</div>
+      </div>
+
+      <div class="step"><div class="step-num">4</div><p>חפשו <strong>"Terminal"</strong> (או <strong>"מסוף"</strong> בעברית) → לחצו ⋯ → <strong>Advanced options</strong></p></div>
+
+      <div class="img-box" style="margin-bottom:16px;">
+        <img src="https://win-terminal-hebrew-118.base44.app/assets/images/reset-step4-terminal.png" alt="Terminal → Advanced options">
+        <div class="caption">חפשו Terminal → ⋯ → Advanced options</div>
+      </div>
+
+      <div class="step"><div class="step-num">5</div><p>לחצו על <strong>Reset</strong> — וסיימתם!</p></div>
+
+      <div class="img-box" style="margin-bottom:16px;">
+        <img src="https://win-terminal-hebrew-118.base44.app/assets/images/terminal-reset-settings.png" alt="לחיצה על Reset">
+        <div class="caption">לחצו Reset</div>
+      </div>
+
+      <div class="card card-green" style="margin-top:12px;">
+        <p><strong>זהו!</strong> הכפתור "Open in Terminal" אמור לעבוד עכשיו. לא צריך הפעלה מחדש.</p>
+      </div>
+    </div>
+
+    <!-- Auto-update warning -->
+    <div class="card card-yellow">
+      <h3>העברית חזרה להיות הפוכה?</h3>
+      <p>Windows מעדכן אוטומטית את Terminal לגרסה חדשה. <strong>זה צפוי לקרות</strong> — אל דאגה:</p>
+      <ol>
+        <li>התקינו שוב את Terminal 1.18 מהקובץ (כפתור ההורדה למעלה)</li>
+        <li>אם הכפתור לא פותח טרמינל — עשו Reset (לפי השלבים למעלה)</li>
+      </ol>
+      <p><strong>טיפ:</strong> שמרו את קובץ ההתקנה במקום נגיש לשימוש עתידי.</p>
+    </div>
+
+    <div class="credit">
+      <p>המדריך המקורי נבנה על ידי <a href="https://www.facebook.com/lior.levi26" target="_blank">Lior Levi</a></p>
+      <p><a href="https://win-terminal-hebrew-118.base44.app/" target="_blank">לאתר המקורי</a></p>
+    </div>
+
+  </div>
+</body>
+</html>
