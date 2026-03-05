@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CNN Visual Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    overflow-x: hidden;
+    transition: direction 0.3s;
+  }
+
+  /* Language toggle */
+  .lang-toggle {
+    position: fixed;
+    top: 1.2rem;
+    right: 1.5rem;
+    z-index: 1000;
+    display: flex;
+    background: rgba(30,41,59,0.9);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    border: 1px solid #334155;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .lang-btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .lang-btn.active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+  }
+  .lang-btn:hover:not(.active) { background: #334155; color: #e2e8f0; }
+
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+    top: -200px; right: -200px;
+    border-radius: 50%;
+  }
+  .hero h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+  }
+  .hero p { font-size: 1.3rem; color: #94a3b8; max-width: 600px; margin-bottom: 2rem; }
+  .scroll-hint {
+    animation: bounce 2s infinite;
+    font-size: 2rem;
+    color: #818cf8;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(12px); }
+  }
+
+  section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+  }
+  section h2 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #c084fc;
+  }
+  section h3 {
+    font-size: 1.4rem;
+    color: #818cf8;
+    margin: 1.5rem 0 0.8rem;
+  }
+  section p, section li {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #cbd5e1;
+  }
+  .card {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+
+  .analogy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .analogy-item {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid #334155;
+    transition: transform 0.3s, border-color 0.3s;
+  }
+  .analogy-item:hover {
+    transform: translateY(-4px);
+    border-color: #818cf8;
+  }
+  .analogy-item .icon { font-size: 3rem; margin-bottom: 0.8rem; }
+  .analogy-item h4 { color: #f472b6; margin-bottom: 0.5rem; font-size: 1.2rem; }
+
+  .conv-demo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    margin: 2rem 0;
+  }
+  .conv-demo-row {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .grid-container { text-align: center; }
+  .grid-container h4 { margin-bottom: 0.8rem; color: #818cf8; }
+  .grid {
+    display: inline-grid;
+    gap: 2px;
+    background: #334155;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 2px;
+  }
+  .grid.g5 { grid-template-columns: repeat(5, 1fr); }
+  .grid.g3 { grid-template-columns: repeat(3, 1fr); }
+  .cell {
+    width: 52px; height: 52px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem;
+    transition: all 0.3s;
+    background: #1e293b;
+  }
+  .cell.highlight { background: #4f46e5; color: #fff; }
+  .cell.kernel-cell { background: #7c3aed; color: #fff; }
+  .cell.result-highlight { background: #ec4899; color: #fff; }
+  .arrow { font-size: 2.5rem; color: #818cf8; }
+  .conv-controls {
+    display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+  }
+  .conv-controls button {
+    padding: 0.7rem 1.5rem;
+    border-radius: 10px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+  }
+  .btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(99,102,241,0.4); }
+  .btn-secondary {
+    background: #334155;
+    color: #e2e8f0;
+    border: 1px solid #475569 !important;
+  }
+  .btn-secondary:hover { background: #475569; }
+  .step-info {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #f472b6;
+    min-height: 1.5em;
+  }
+
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding: 2rem 0;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .pipe-stage {
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 14px;
+    padding: 1.2rem 1.5rem;
+    text-align: center;
+    min-width: 130px;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+  }
+  .pipe-stage:hover, .pipe-stage.active {
+    border-color: #818cf8;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(99,102,241,0.2);
+  }
+  .pipe-stage .stage-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .pipe-stage .stage-name { font-weight: 700; color: #e2e8f0; font-size: 0.95rem; }
+  .pipe-arrow {
+    font-size: 1.8rem;
+    color: #4f46e5;
+    padding: 0 0.3rem;
+  }
+  .stage-detail {
+    background: #1e293b;
+    border-radius: 14px;
+    padding: 2rem;
+    margin-top: 1.5rem;
+    border: 1px solid #4f46e5;
+    min-height: 120px;
+    animation: fadeIn 0.3s;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .hierarchy {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .hier-box {
+    background: #1e293b;
+    border-radius: 14px;
+    padding: 1.5rem 2rem;
+    text-align: center;
+    border: 2px solid #334155;
+    transition: all 0.3s;
+    min-width: 160px;
+  }
+  .hier-box:hover { border-color: #c084fc; transform: scale(1.05); }
+  .hier-box .hier-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+  .hier-box .hier-label { font-weight: 700; color: #c084fc; font-size: 0.95rem; }
+  .hier-box .hier-desc { color: #94a3b8; font-size: 0.85rem; margin-top: 0.3rem; }
+  .hier-arrow { font-size: 2rem; color: #6366f1; }
+
+  .pool-demo {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+  }
+  .pool-grid {
+    display: inline-grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    background: #334155;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 2px;
+  }
+  .pool-cell {
+    width: 56px; height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem;
+    background: #1e293b;
+    transition: all 0.3s;
+  }
+  .pool-cell.pool-a { background: #4f46e5; color: #fff; }
+  .pool-cell.pool-b { background: #7c3aed; color: #fff; }
+  .pool-cell.pool-c { background: #a855f7; color: #fff; }
+  .pool-cell.pool-d { background: #c084fc; color: #fff; }
+  .pool-result {
+    display: inline-grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+    background: #334155;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 2px;
+  }
+  .pool-res-cell {
+    width: 56px; height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1.1rem;
+    color: #fff;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    margin: 1.5rem 0;
+  }
+  .summary-card {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-radius: 14px;
+    padding: 1.5rem;
+    border: 1px solid #334155;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  .summary-card:hover { border-color: #f472b6; transform: translateY(-4px); }
+  .summary-card .s-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+  .summary-card h4 { color: #f472b6; margin-bottom: 0.5rem; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2.2rem; }
+    .analogy-grid { grid-template-columns: 1fr; }
+    .conv-demo-row { flex-direction: column; }
+    .cell { width: 42px; height: 42px; font-size: 0.85rem; }
+    .pool-cell, .pool-res-cell { width: 46px; height: 46px; }
+    section { padding: 2.5rem 1rem; }
+    .lang-toggle { top: 0.8rem; right: 0.8rem; }
+    .lang-btn { padding: 0.5rem 0.8rem; font-size: 0.85rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Language Toggle -->
+<div class="lang-toggle">
+  <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN English</button>
+  <button class="lang-btn" id="btn-he" onclick="setLang('he')">HE עברית</button>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <h1 data-i18n="hero_title">CNN Visual Guide</h1>
+  <p data-i18n="hero_subtitle">Convolutional Neural Networks explained visually — no math, just intuition and interactive demos.</p>
+  <div class="scroll-hint">↓</div>
+</div>
+
+<!-- 1. WHAT IS A CNN? -->
+<section>
+  <h2 data-i18n="what_title">🧠 What is a CNN?</h2>
+  <p data-i18n="what_desc">A <strong>Convolutional Neural Network</strong> is a type of AI that learns to <em>see</em>. Just like your brain processes what your eyes see — a CNN processes images by breaking them down into simple patterns and building up to complex understanding.</p>
+
+  <div class="analogy-grid">
+    <div class="analogy-item">
+      <div class="icon">👶</div>
+      <h4 data-i18n="analogy_baby_title">How a Baby Learns</h4>
+      <p data-i18n="analogy_baby_desc">A baby first learns to see edges and colors, then shapes, then faces, then recognizes "mom".</p>
+    </div>
+    <div class="analogy-item">
+      <div class="icon">🤖</div>
+      <h4 data-i18n="analogy_cnn_title">How a CNN Learns</h4>
+      <p data-i18n="analogy_cnn_desc">A CNN first detects edges, then textures, then parts (ears, eyes), then recognizes "cat".</p>
+    </div>
+    <div class="analogy-item">
+      <div class="icon">🔍</div>
+      <h4 data-i18n="analogy_magnify_title">Like a Magnifying Glass</h4>
+      <p data-i18n="analogy_magnify_desc">The CNN slides a small "window" across the image, looking for specific patterns at each position.</p>
+    </div>
+    <div class="analogy-item">
+      <div class="icon">🧱</div>
+      <h4 data-i18n="analogy_blocks_title">Building Blocks</h4>
+      <p data-i18n="analogy_blocks_desc">Simple patterns combine into complex ones — edges → shapes → objects. Layer by layer.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2. FEATURE HIERARCHY -->
+<section>
+  <h2 data-i18n="layers_title">👁️ What Does Each Layer See?</h2>
+  <p data-i18n="layers_desc">Each layer in a CNN learns to detect increasingly complex features:</p>
+
+  <div class="hierarchy">
+    <div class="hier-box">
+      <div class="hier-icon">📐</div>
+      <div class="hier-label" data-i18n="layer1_label">Layer 1: Edges</div>
+      <div class="hier-desc" data-i18n="layer1_desc">Lines, borders, simple gradients</div>
+    </div>
+    <div class="hier-arrow" data-i18n-arrow>→</div>
+    <div class="hier-box">
+      <div class="hier-icon">🔲</div>
+      <div class="hier-label" data-i18n="layer2_label">Layer 2: Textures</div>
+      <div class="hier-desc" data-i18n="layer2_desc">Corners, circles, patterns</div>
+    </div>
+    <div class="hier-arrow" data-i18n-arrow>→</div>
+    <div class="hier-box">
+      <div class="hier-icon">👃</div>
+      <div class="hier-label" data-i18n="layer3_label">Layer 3: Parts</div>
+      <div class="hier-desc" data-i18n="layer3_desc">Eyes, ears, wheels, windows</div>
+    </div>
+    <div class="hier-arrow" data-i18n-arrow>→</div>
+    <div class="hier-box">
+      <div class="hier-icon">🐱</div>
+      <div class="hier-label" data-i18n="layer4_label">Layer 4: Objects</div>
+      <div class="hier-desc" data-i18n="layer4_desc">Cat! Dog! Car! Person!</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. CONVOLUTION INTERACTIVE -->
+<section>
+  <h2 data-i18n="conv_title">🎯 The Convolution Operation</h2>
+  <p data-i18n="conv_desc">This is the core of a CNN. A small <strong>filter</strong> (also called a kernel) slides across the image. At each position, it multiplies the overlapping values and adds them up to produce one number in the output.</p>
+
+  <div class="card">
+    <div class="conv-demo" id="convDemo">
+      <div class="conv-demo-row">
+        <div class="grid-container">
+          <h4 data-i18n="conv_input">Input Image (5×5)</h4>
+          <div class="grid g5" id="inputGrid"></div>
+        </div>
+        <div class="arrow">✕</div>
+        <div class="grid-container">
+          <h4 data-i18n="conv_filter">Filter (3×3)</h4>
+          <div class="grid g3" id="kernelGrid"></div>
+        </div>
+        <div class="arrow">=</div>
+        <div class="grid-container">
+          <h4 data-i18n="conv_output">Output (3×3)</h4>
+          <div class="grid g3" id="outputGrid"></div>
+        </div>
+      </div>
+      <div class="step-info" id="stepInfo" data-i18n="conv_hint">Click "Step" to watch the filter slide across the image!</div>
+      <div class="conv-controls">
+        <button class="btn-primary" onclick="stepConv()" data-i18n="btn_step">▶ Step</button>
+        <button class="btn-primary" onclick="autoPlay()" data-i18n="btn_auto">⏩ Auto Play</button>
+        <button class="btn-secondary" onclick="resetConv()" data-i18n="btn_reset">↻ Reset</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. POOLING -->
+<section>
+  <h2 data-i18n="pool_title">🏊 Pooling: Shrink & Simplify</h2>
+  <p data-i18n="pool_desc">After convolution, we use <strong>Max Pooling</strong> to shrink the image. It takes the <em>biggest value</em> from each 2×2 region. This keeps the important information while making everything smaller and faster.</p>
+
+  <div class="card">
+    <div class="pool-demo">
+      <div>
+        <h4 style="text-align:center; color:#818cf8; margin-bottom:0.8rem;" data-i18n="pool_before">Before Pooling (4×4)</h4>
+        <div class="pool-grid">
+          <div class="pool-cell pool-a">1</div><div class="pool-cell pool-a">3</div>
+          <div class="pool-cell pool-b">2</div><div class="pool-cell pool-b">8</div>
+          <div class="pool-cell pool-a">5</div><div class="pool-cell pool-a">6</div>
+          <div class="pool-cell pool-b">7</div><div class="pool-cell pool-b">4</div>
+          <div class="pool-cell pool-c">9</div><div class="pool-cell pool-c">2</div>
+          <div class="pool-cell pool-d">3</div><div class="pool-cell pool-d">1</div>
+          <div class="pool-cell pool-c">4</div><div class="pool-cell pool-c">5</div>
+          <div class="pool-cell pool-d">6</div><div class="pool-cell pool-d">7</div>
+        </div>
+      </div>
+      <div class="arrow" style="font-size:2rem;" data-i18n="pool_arrow">→ MAX →</div>
+      <div>
+        <h4 style="text-align:center; color:#818cf8; margin-bottom:0.8rem;" data-i18n="pool_after">After Pooling (2×2)</h4>
+        <div class="pool-result">
+          <div class="pool-res-cell" style="background:#4f46e5;">6</div>
+          <div class="pool-res-cell" style="background:#7c3aed;">8</div>
+          <div class="pool-res-cell" style="background:#a855f7;">9</div>
+          <div class="pool-res-cell" style="background:#c084fc;">7</div>
+        </div>
+      </div>
+    </div>
+    <p style="text-align:center; margin-top:1rem; color:#94a3b8;" data-i18n="pool_explain">
+      Each color group → take the <strong>maximum</strong> value → result is 4x smaller!
+    </p>
+  </div>
+</section>
+
+<!-- 5. FULL PIPELINE -->
+<section>
+  <h2 data-i18n="pipeline_title">🔗 The Full CNN Pipeline</h2>
+  <p data-i18n="pipeline_desc">Click each stage to learn more:</p>
+
+  <div class="pipeline" id="pipelineContainer">
+    <div class="pipe-stage" onclick="showStage(0)">
+      <div class="stage-icon">🖼️</div>
+      <div class="stage-name" data-i18n="stage_input">Input Image</div>
+    </div>
+    <div class="pipe-arrow" data-i18n-arrow>→</div>
+    <div class="pipe-stage" onclick="showStage(1)">
+      <div class="stage-icon">🔍</div>
+      <div class="stage-name" data-i18n="stage_conv">Convolution</div>
+    </div>
+    <div class="pipe-arrow" data-i18n-arrow>→</div>
+    <div class="pipe-stage" onclick="showStage(2)">
+      <div class="stage-icon">⚡</div>
+      <div class="stage-name">ReLU</div>
+    </div>
+    <div class="pipe-arrow" data-i18n-arrow>→</div>
+    <div class="pipe-stage" onclick="showStage(3)">
+      <div class="stage-icon">🏊</div>
+      <div class="stage-name" data-i18n="stage_pool">Pooling</div>
+    </div>
+    <div class="pipe-arrow" data-i18n-arrow>→</div>
+    <div class="pipe-stage" onclick="showStage(4)">
+      <div class="stage-icon">📊</div>
+      <div class="stage-name" data-i18n="stage_flat">Flatten</div>
+    </div>
+    <div class="pipe-arrow" data-i18n-arrow>→</div>
+    <div class="pipe-stage" onclick="showStage(5)">
+      <div class="stage-icon">🧠</div>
+      <div class="stage-name" data-i18n="stage_dense">Dense Layer</div>
+    </div>
+    <div class="pipe-arrow" data-i18n-arrow>→</div>
+    <div class="pipe-stage" onclick="showStage(6)">
+      <div class="stage-icon">🏷️</div>
+      <div class="stage-name" data-i18n="stage_output">Output</div>
+    </div>
+  </div>
+  <div class="stage-detail" id="stageDetail">
+    <p style="color:#94a3b8; text-align:center;" data-i18n="pipeline_click">👆 Click on any stage above to see details!</p>
+  </div>
+</section>
+
+<!-- 6. REAL WORLD -->
+<section>
+  <h2 data-i18n="uses_title">🌍 Where Are CNNs Used?</h2>
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="s-icon">📸</div>
+      <h4 data-i18n="use_photo_title">Photo Apps</h4>
+      <p data-i18n="use_photo_desc">Face detection, filters, auto-tagging your photos.</p>
+    </div>
+    <div class="summary-card">
+      <div class="s-icon">🚗</div>
+      <h4 data-i18n="use_car_title">Self-Driving Cars</h4>
+      <p data-i18n="use_car_desc">Detecting lanes, signs, pedestrians, other cars.</p>
+    </div>
+    <div class="summary-card">
+      <div class="s-icon">🏥</div>
+      <h4 data-i18n="use_med_title">Medical Imaging</h4>
+      <p data-i18n="use_med_desc">Finding tumors in X-rays and MRI scans.</p>
+    </div>
+    <div class="summary-card">
+      <div class="s-icon">🛡️</div>
+      <h4 data-i18n="use_sec_title">Security</h4>
+      <p data-i18n="use_sec_desc">Surveillance, facial recognition systems.</p>
+    </div>
+    <div class="summary-card">
+      <div class="s-icon">🎮</div>
+      <h4 data-i18n="use_game_title">Gaming</h4>
+      <p data-i18n="use_game_desc">Game AI that learns from screen pixels.</p>
+    </div>
+    <div class="summary-card">
+      <div class="s-icon">🛒</div>
+      <h4 data-i18n="use_shop_title">E-Commerce</h4>
+      <p data-i18n="use_shop_desc">Visual search — snap a photo, find the product.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7. KEY TAKEAWAYS -->
+<section>
+  <h2 data-i18n="takeaway_title">✨ Key Takeaways</h2>
+  <div class="card">
+    <div style="display:grid; gap:1rem;">
+      <p data-i18n="take1">✅ <strong>Convolution</strong> = slide a small filter to detect patterns</p>
+      <p data-i18n="take2">✅ <strong>ReLU</strong> = keep positive values, zero out negatives</p>
+      <p data-i18n="take3">✅ <strong>Pooling</strong> = shrink the data, keep important features</p>
+      <p data-i18n="take4">✅ <strong>Dense layers</strong> = make the final decision (classify)</p>
+      <p data-i18n="take5">✅ <strong>Deep = powerful</strong> — more layers = detects more complex things</p>
+      <p data-i18n="take6">✅ <strong>Learns automatically</strong> — the filter values are learned from data, not hand-crafted!</p>
+    </div>
+  </div>
+</section>
+
+<div style="text-align:center; padding:3rem; color:#475569;" data-i18n="footer">
+  Built for learning. Explore, click, and experiment!
+</div>
+
+<script>
+// ==================== TRANSLATIONS ====================
+const T = {
+  en: {
+    hero_title: 'CNN Visual Guide',
+    hero_subtitle: 'Convolutional Neural Networks explained visually — no math, just intuition and interactive demos.',
+    what_title: '🧠 What is a CNN?',
+    what_desc: 'A <strong>Convolutional Neural Network</strong> is a type of AI that learns to <em>see</em>. Just like your brain processes what your eyes see — a CNN processes images by breaking them down into simple patterns and building up to complex understanding.',
+    analogy_baby_title: 'How a Baby Learns',
+    analogy_baby_desc: 'A baby first learns to see edges and colors, then shapes, then faces, then recognizes "mom".',
+    analogy_cnn_title: 'How a CNN Learns',
+    analogy_cnn_desc: 'A CNN first detects edges, then textures, then parts (ears, eyes), then recognizes "cat".',
+    analogy_magnify_title: 'Like a Magnifying Glass',
+    analogy_magnify_desc: 'The CNN slides a small "window" across the image, looking for specific patterns at each position.',
+    analogy_blocks_title: 'Building Blocks',
+    analogy_blocks_desc: 'Simple patterns combine into complex ones — edges → shapes → objects. Layer by layer.',
+    layers_title: '👁️ What Does Each Layer See?',
+    layers_desc: 'Each layer in a CNN learns to detect increasingly complex features:',
+    layer1_label: 'Layer 1: Edges', layer1_desc: 'Lines, borders, simple gradients',
+    layer2_label: 'Layer 2: Textures', layer2_desc: 'Corners, circles, patterns',
+    layer3_label: 'Layer 3: Parts', layer3_desc: 'Eyes, ears, wheels, windows',
+    layer4_label: 'Layer 4: Objects', layer4_desc: 'Cat! Dog! Car! Person!',
+    conv_title: '🎯 The Convolution Operation',
+    conv_desc: 'This is the core of a CNN. A small <strong>filter</strong> (also called a kernel) slides across the image. At each position, it multiplies the overlapping values and adds them up to produce one number in the output.',
+    conv_input: 'Input Image (5×5)',
+    conv_filter: 'Filter (3×3)',
+    conv_output: 'Output (3×3)',
+    conv_hint: 'Click "Step" to watch the filter slide across the image!',
+    conv_done: '✅ Done! The filter has scanned the entire image.',
+    conv_pos: 'Position ({0},{1}): filter × image patch = {2}',
+    btn_step: '▶ Step',
+    btn_auto: '⏩ Auto Play',
+    btn_reset: '↻ Reset',
+    pool_title: '🏊 Pooling: Shrink & Simplify',
+    pool_desc: 'After convolution, we use <strong>Max Pooling</strong> to shrink the image. It takes the <em>biggest value</em> from each 2×2 region. This keeps the important information while making everything smaller and faster.',
+    pool_before: 'Before Pooling (4×4)',
+    pool_after: 'After Pooling (2×2)',
+    pool_arrow: '→ MAX →',
+    pool_explain: 'Each color group → take the <strong>maximum</strong> value → result is 4x smaller!',
+    pipeline_title: '🔗 The Full CNN Pipeline',
+    pipeline_desc: 'Click each stage to learn more:',
+    pipeline_click: '👆 Click on any stage above to see details!',
+    stage_input: 'Input Image', stage_conv: 'Convolution', stage_pool: 'Pooling',
+    stage_flat: 'Flatten', stage_dense: 'Dense Layer', stage_output: 'Output',
+    uses_title: '🌍 Where Are CNNs Used?',
+    use_photo_title: 'Photo Apps', use_photo_desc: 'Face detection, filters, auto-tagging your photos.',
+    use_car_title: 'Self-Driving Cars', use_car_desc: 'Detecting lanes, signs, pedestrians, other cars.',
+    use_med_title: 'Medical Imaging', use_med_desc: 'Finding tumors in X-rays and MRI scans.',
+    use_sec_title: 'Security', use_sec_desc: 'Surveillance, facial recognition systems.',
+    use_game_title: 'Gaming', use_game_desc: 'Game AI that learns from screen pixels.',
+    use_shop_title: 'E-Commerce', use_shop_desc: 'Visual search — snap a photo, find the product.',
+    takeaway_title: '✨ Key Takeaways',
+    take1: '✅ <strong>Convolution</strong> = slide a small filter to detect patterns',
+    take2: '✅ <strong>ReLU</strong> = keep positive values, zero out negatives',
+    take3: '✅ <strong>Pooling</strong> = shrink the data, keep important features',
+    take4: '✅ <strong>Dense layers</strong> = make the final decision (classify)',
+    take5: '✅ <strong>Deep = powerful</strong> — more layers = detects more complex things',
+    take6: '✅ <strong>Learns automatically</strong> — the filter values are learned from data, not hand-crafted!',
+    footer: 'Built for learning. Explore, click, and experiment!',
+    stages: [
+      { title: '🖼️ Input Image', html: '<p>The raw image is fed as a grid of numbers. A grayscale image is a 2D grid of pixel values (0-255). A color image has 3 channels: <strong style="color:#ef4444;">Red</strong>, <strong style="color:#22c55e;">Green</strong>, <strong style="color:#3b82f6;">Blue</strong> — so it\'s a 3D grid (height × width × 3).</p><p style="margin-top:0.8rem; color:#94a3b8;">Example: a 224×224 color photo = 224 × 224 × 3 = 150,528 numbers!</p>' },
+      { title: '🔍 Convolution', html: '<p>Small filters (e.g. 3×3) slide across the image. Each filter detects a specific pattern — one might detect vertical edges, another horizontal edges, another diagonal lines.</p><p style="margin-top:0.8rem; color:#94a3b8;">A typical first layer might have 32 different filters, producing 32 feature maps!</p>' },
+      { title: '⚡ ReLU Activation', html: '<p>A super simple function: <strong>if the value is negative → make it 0, otherwise keep it</strong>.</p><p style="margin-top:0.8rem;">This adds "non-linearity" — without it, no matter how many layers you stack, the network could only learn simple linear patterns. With ReLU, it can learn complex curved boundaries!</p><p style="margin-top:0.8rem; font-family:monospace; font-size:1.3rem; color:#22c55e; text-align:center;">f(x) = max(0, x)</p>' },
+      { title: '🏊 Pooling', html: '<p><strong>Max Pooling</strong> takes the maximum value from each small region (usually 2×2). This does two things:</p><p style="margin-top:0.5rem;">1️⃣ <strong>Shrinks</strong> the data — half the width and height</p><p>2️⃣ <strong>Makes the CNN robust</strong> — if a feature moves a pixel or two, the max is still the same!</p><p style="margin-top:0.8rem; color:#94a3b8;">After pooling, a 224×224 image might become 112×112, then 56×56, then 28×28...</p>' },
+      { title: '📊 Flatten', html: '<p>After several conv+pool blocks, we have many small feature maps. <strong>Flatten</strong> simply reshapes this 3D data into a 1D list of numbers.</p><p style="margin-top:0.8rem; color:#94a3b8;">Think of it like taking a stack of papers and reading them out loud, one number at a time, into a single long list.</p><p style="margin-top:0.8rem; font-family:monospace; text-align:center; color:#818cf8;">[7×7×128] → [6272]</p>' },
+      { title: '🧠 Dense (Fully Connected) Layer', html: '<p>Now every number is connected to every neuron in the next layer — like a traditional neural network. This is where the CNN "thinks" about all the features together to make a decision.</p><p style="margin-top:0.8rem; color:#94a3b8;">"I see pointy ears + whiskers + fur + small nose... probably a cat!"</p>' },
+      { title: '🏷️ Output', html: '<p>The final layer has one neuron per class. A <strong>Softmax</strong> function converts the outputs into probabilities that add up to 100%.</p><p style="margin-top:1rem; text-align:center; font-size:1.1rem;">🐱 Cat: <strong style="color:#22c55e;">92%</strong> &nbsp;&nbsp;🐶 Dog: <strong style="color:#94a3b8;">5%</strong> &nbsp;&nbsp;🐰 Rabbit: <strong style="color:#94a3b8;">3%</strong></p>' }
+    ]
+  },
+  he: {
+    hero_title: 'מדריך ויזואלי ל-CNN',
+    hero_subtitle: 'רשתות נוירונים קונבולוציוניות בהסבר ויזואלי — בלי מתמטיקה, רק אינטואיציה ודמואים אינטראקטיביים.',
+    what_title: '🧠 מה זה CNN?',
+    what_desc: '<strong>רשת נוירונים קונבולוציונית</strong> היא סוג של בינה מלאכותית שלומדת <em>לראות</em>. בדיוק כמו שהמוח שלך מעבד את מה שהעיניים רואות — CNN מעבדת תמונות על ידי פירוק לדפוסים פשוטים ובנייה הדרגתית להבנה מורכבת.',
+    analogy_baby_title: 'איך תינוק לומד',
+    analogy_baby_desc: 'תינוק קודם לומד לראות קצוות וצבעים, אחר כך צורות, אחר כך פרצופים, ואז מזהה את "אמא".',
+    analogy_cnn_title: 'איך CNN לומדת',
+    analogy_cnn_desc: 'CNN קודם מזהה קצוות, אחר כך טקסטורות, אחר כך חלקים (אוזניים, עיניים), ואז מזהה "חתול".',
+    analogy_magnify_title: 'כמו זכוכית מגדלת',
+    analogy_magnify_desc: 'ה-CNN מחליק "חלון" קטן על פני התמונה, ומחפש דפוסים ספציפיים בכל מיקום.',
+    analogy_blocks_title: 'אבני בניין',
+    analogy_blocks_desc: 'דפוסים פשוטים מתחברים למורכבים — קצוות ← צורות ← אובייקטים. שכבה אחרי שכבה.',
+    layers_title: '👁️ מה כל שכבה רואה?',
+    layers_desc: 'כל שכבה ב-CNN לומדת לזהות תכונות מורכבות יותר ויותר:',
+    layer1_label: 'שכבה 1: קצוות', layer1_desc: 'קווים, גבולות, מעברי צבע',
+    layer2_label: 'שכבה 2: טקסטורות', layer2_desc: 'פינות, עיגולים, דפוסים',
+    layer3_label: 'שכבה 3: חלקים', layer3_desc: 'עיניים, אוזניים, גלגלים, חלונות',
+    layer4_label: 'שכבה 4: אובייקטים', layer4_desc: '!חתול! כלב! מכונית! אדם',
+    conv_title: '🎯 פעולת הקונבולוציה',
+    conv_desc: 'זהו הליבה של CNN. <strong>פילטר</strong> קטן (שנקרא גם kernel) מחליק על פני התמונה. בכל מיקום, הוא מכפיל את הערכים החופפים ומחבר אותם כדי לייצר מספר אחד בפלט.',
+    conv_input: '(5×5) תמונת קלט',
+    conv_filter: '(3×3) פילטר',
+    conv_output: '(3×3) פלט',
+    conv_hint: '!לחץ "צעד" כדי לראות את הפילטר מחליק על התמונה',
+    conv_done: '✅ !סיום! הפילטר סרק את כל התמונה',
+    conv_pos: '({0},{1}) :מיקום: פילטר × חלק מהתמונה = {2}',
+    btn_step: '▶ צעד',
+    btn_auto: '⏩ הפעלה אוטומטית',
+    btn_reset: '↻ איפוס',
+    pool_title: '🏊 Pooling: כיווץ ופישוט',
+    pool_desc: 'אחרי קונבולוציה, אנחנו משתמשים ב-<strong>Max Pooling</strong> כדי לכווץ את התמונה. זה לוקח את <em>הערך הגדול ביותר</em> מכל אזור 2×2. זה שומר על המידע החשוב תוך הקטנת הכל.',
+    pool_before: '(4×4) לפני Pooling',
+    pool_after: '(2×2) אחרי Pooling',
+    pool_arrow: '← MAX ←',
+    pool_explain: '!כל קבוצת צבע ← לוקחים את ה<strong>מקסימום</strong> ← התוצאה קטנה פי 4',
+    pipeline_title: '🔗 הצינור המלא של CNN',
+    pipeline_desc: ':לחץ על כל שלב כדי ללמוד עוד',
+    pipeline_click: '!👆 לחץ על כל שלב למעלה כדי לראות פרטים',
+    stage_input: 'תמונת קלט', stage_conv: 'קונבולוציה', stage_pool: 'Pooling',
+    stage_flat: 'שיטוח', stage_dense: 'שכבה צפופה', stage_output: 'פלט',
+    uses_title: '🌍 ?איפה משתמשים ב-CNN',
+    use_photo_title: 'אפליקציות צילום', use_photo_desc: '.זיהוי פנים, פילטרים, תיוג אוטומטי של תמונות',
+    use_car_title: 'מכוניות אוטונומיות', use_car_desc: '.זיהוי נתיבים, שלטים, הולכי רגל, מכוניות אחרות',
+    use_med_title: 'דימות רפואי', use_med_desc: '.איתור גידולים בצילומי רנטגן ו-MRI',
+    use_sec_title: 'אבטחה', use_sec_desc: '.מצלמות אבטחה, מערכות זיהוי פנים',
+    use_game_title: 'גיימינג', use_game_desc: '.בינה מלאכותית למשחקים שלומדת מפיקסלים',
+    use_shop_title: 'מסחר אלקטרוני', use_shop_desc: '.חיפוש ויזואלי — צלם תמונה, מצא את המוצר',
+    takeaway_title: '✨ נקודות מפתח',
+    take1: '✅ <strong>קונבולוציה</strong> = להחליק פילטר קטן כדי לזהות דפוסים',
+    take2: '✅ <strong>ReLU</strong> = לשמור ערכים חיוביים, לאפס שליליים',
+    take3: '✅ <strong>Pooling</strong> = לכווץ את הנתונים, לשמור תכונות חשובות',
+    take4: '✅ <strong>שכבות צפופות</strong> = לקבל את ההחלטה הסופית (סיווג)',
+    take5: '✅ <strong>עמוק = חזק</strong> — יותר שכבות = מזהה דברים מורכבים יותר',
+    take6: '✅ <strong>לומד אוטומטית</strong> — ערכי הפילטר נלמדים מהנתונים, לא נכתבים ידנית!',
+    footer: '!נבנה ללמידה. חקרו, לחצו ונסו',
+    stages: [
+      { title: '🖼️ תמונת קלט', html: '<p>התמונה הגולמית מוזנת כרשת של מספרים. תמונה בגווני אפור היא רשת דו-ממדית של ערכי פיקסלים (0-255). לתמונה צבעונית יש 3 ערוצים: <strong style="color:#ef4444;">אדום</strong>, <strong style="color:#22c55e;">ירוק</strong>, <strong style="color:#3b82f6;">כחול</strong> — אז זו רשת תלת-ממדית (גובה × רוחב × 3).</p><p style="margin-top:0.8rem; color:#94a3b8;">דוגמה: תמונה צבעונית 224×224 = 224 × 224 × 3 = 150,528 מספרים!</p>' },
+      { title: '🔍 קונבולוציה', html: '<p>פילטרים קטנים (למשל 3×3) מחליקים על פני התמונה. כל פילטר מזהה דפוס ספציפי — אחד מזהה קצוות אנכיים, אחר קצוות אופקיים, ואחר קווים אלכסוניים.</p><p style="margin-top:0.8rem; color:#94a3b8;">שכבה ראשונה טיפוסית עשויה להכיל 32 פילטרים שונים, שמייצרים 32 מפות תכונות!</p>' },
+      { title: '⚡ הפעלת ReLU', html: '<p>פונקציה סופר פשוטה: <strong>אם הערך שלילי ← הפוך ל-0, אחרת השאר אותו</strong>.</p><p style="margin-top:0.8rem;">זה מוסיף "אי-ליניאריות" — בלי זה, לא משנה כמה שכבות תערמו, הרשת תוכל ללמוד רק דפוסים ליניאריים פשוטים. עם ReLU, היא יכולה ללמוד גבולות מורכבים ומעוקלים!</p><p style="margin-top:0.8rem; font-family:monospace; font-size:1.3rem; color:#22c55e; text-align:center;">f(x) = max(0, x)</p>' },
+      { title: '🏊 Pooling', html: '<p><strong>Max Pooling</strong> לוקח את הערך המקסימלי מכל אזור קטן (בדרך כלל 2×2). זה עושה שני דברים:</p><p style="margin-top:0.5rem;">1️⃣ <strong>מכווץ</strong> את הנתונים — חצי מהרוחב והגובה</p><p>2️⃣ <strong>הופך את ה-CNN לעמיד</strong> — אם תכונה זזה פיקסל או שניים, המקסימום נשאר אותו דבר!</p><p style="margin-top:0.8rem; color:#94a3b8;">אחרי pooling, תמונה 224×224 עשויה להפוך ל-112×112, אז 56×56, אז 28×28...</p>' },
+      { title: '📊 שיטוח (Flatten)', html: '<p>אחרי כמה בלוקים של conv+pool, יש לנו הרבה מפות תכונות קטנות. <strong>שיטוח</strong> פשוט מעצב מחדש את הנתונים התלת-ממדיים לרשימה חד-ממדית של מספרים.</p><p style="margin-top:0.8rem; color:#94a3b8;">תחשבו על זה כמו לקחת ערימת דפים ולקרוא אותם בקול, מספר אחד בכל פעם, לרשימה ארוכה אחת.</p><p style="margin-top:0.8rem; font-family:monospace; text-align:center; color:#818cf8;">[7×7×128] → [6272]</p>' },
+      { title: '🧠 שכבה צפופה (Fully Connected)', html: '<p>עכשיו כל מספר מחובר לכל נוירון בשכבה הבאה — כמו רשת נוירונים מסורתית. כאן ה-CNN "חושב" על כל התכונות ביחד כדי לקבל החלטה.</p><p style="margin-top:0.8rem; color:#94a3b8;">"אני רואה אוזניים מחודדות + שפם + פרווה + אף קטן... כנראה חתול!"</p>' },
+      { title: '🏷️ פלט', html: '<p>השכבה האחרונה מכילה נוירון אחד לכל קטגוריה. פונקציית <strong>Softmax</strong> ממירה את הפלטים להסתברויות שמסתכמות ל-100%.</p><p style="margin-top:1rem; text-align:center; font-size:1.1rem;">🐱 חתול: <strong style="color:#22c55e;">92%</strong> &nbsp;&nbsp;🐶 כלב: <strong style="color:#94a3b8;">5%</strong> &nbsp;&nbsp;🐰 ארנב: <strong style="color:#94a3b8;">3%</strong></p>' }
+    ]
+  }
+};
+
+let currentLang = 'en';
+
+function setLang(lang) {
+  currentLang = lang;
+  const html = document.documentElement;
+  html.lang = lang;
+  html.dir = lang === 'he' ? 'rtl' : 'ltr';
+
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-he').classList.toggle('active', lang === 'he');
+
+  // Update all data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (T[lang][key]) el.innerHTML = T[lang][key];
+  });
+
+  // Flip arrows for RTL
+  document.querySelectorAll('[data-i18n-arrow]').forEach(el => {
+    el.textContent = lang === 'he' ? '←' : '→';
+  });
+
+  // Reset stage detail
+  document.getElementById('stageDetail').innerHTML =
+    `<p style="color:#94a3b8; text-align:center;">${T[lang].pipeline_click}</p>`;
+
+  // Reset convolution step info
+  if (done) {
+    document.getElementById('stepInfo').innerHTML = T[lang].conv_done;
+  } else if (currentRow === 0 && currentCol === 0) {
+    document.getElementById('stepInfo').innerHTML = T[lang].conv_hint;
+  }
+}
+
+// ==================== CONVOLUTION DEMO ====================
+const inputData = [
+  [1, 0, 1, 0, 1],
+  [0, 1, 0, 1, 0],
+  [1, 1, 1, 0, 0],
+  [0, 0, 1, 1, 1],
+  [1, 0, 0, 1, 0]
+];
+
+const kernel = [
+  [1, 0, -1],
+  [1, 0, -1],
+  [1, 0, -1]
+];
+
+let outputData = Array(3).fill(null).map(() => Array(3).fill(null));
+let currentRow = 0, currentCol = 0;
+let done = false;
+let autoPlaying = false;
+
+function buildGrids() {
+  const ig = document.getElementById('inputGrid');
+  const kg = document.getElementById('kernelGrid');
+  const og = document.getElementById('outputGrid');
+  ig.innerHTML = ''; kg.innerHTML = ''; og.innerHTML = '';
+
+  for (let r = 0; r < 5; r++)
+    for (let c = 0; c < 5; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.id = `in-${r}-${c}`;
+      cell.textContent = inputData[r][c];
+      ig.appendChild(cell);
+    }
+
+  for (let r = 0; r < 3; r++)
+    for (let c = 0; c < 3; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell kernel-cell';
+      cell.textContent = kernel[r][c];
+      kg.appendChild(cell);
+    }
+
+  for (let r = 0; r < 3; r++)
+    for (let c = 0; c < 3; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.id = `out-${r}-${c}`;
+      cell.textContent = '';
+      og.appendChild(cell);
+    }
+}
+
+function clearHighlights() {
+  document.querySelectorAll('#inputGrid .cell').forEach(c => c.classList.remove('highlight'));
+  document.querySelectorAll('#outputGrid .cell').forEach(c => c.classList.remove('result-highlight'));
+}
+
+function stepConv() {
+  if (done) return;
+  clearHighlights();
+
+  let sum = 0;
+  for (let kr = 0; kr < 3; kr++)
+    for (let kc = 0; kc < 3; kc++) {
+      const ir = currentRow + kr, ic = currentCol + kc;
+      document.getElementById(`in-${ir}-${ic}`).classList.add('highlight');
+      sum += inputData[ir][ic] * kernel[kr][kc];
+    }
+
+  outputData[currentRow][currentCol] = sum;
+  const outCell = document.getElementById(`out-${currentRow}-${currentCol}`);
+  outCell.textContent = sum;
+  outCell.classList.add('result-highlight');
+
+  document.getElementById('stepInfo').textContent =
+    T[currentLang].conv_pos.replace('{0}', currentRow).replace('{1}', currentCol).replace('{2}', sum);
+
+  currentCol++;
+  if (currentCol > 2) { currentCol = 0; currentRow++; }
+  if (currentRow > 2) {
+    done = true;
+    document.getElementById('stepInfo').textContent = T[currentLang].conv_done;
+  }
+}
+
+function autoPlay() {
+  if (autoPlaying || done) return;
+  autoPlaying = true;
+  const interval = setInterval(() => {
+    if (done) { clearInterval(interval); autoPlaying = false; return; }
+    stepConv();
+  }, 600);
+}
+
+function resetConv() {
+  currentRow = 0; currentCol = 0; done = false; autoPlaying = false;
+  outputData = Array(3).fill(null).map(() => Array(3).fill(null));
+  buildGrids();
+  document.getElementById('stepInfo').textContent = T[currentLang].conv_hint;
+}
+
+buildGrids();
+
+// ==================== PIPELINE ====================
+function showStage(i) {
+  document.querySelectorAll('.pipe-stage').forEach((s, idx) => {
+    s.classList.toggle('active', idx === i);
+  });
+  const stageData = T[currentLang].stages[i];
+  const detail = document.getElementById('stageDetail');
+  detail.innerHTML = `<h3 style="margin-bottom:0.8rem;">${stageData.title}</h3>${stageData.html}`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>לינקים ומשאבים שימושיים</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: #1a1a2e; line-height: 1.7; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 1.8em; margin-bottom: 8px; color: #0c87f2; }
+    h2 { font-size: 1.4em; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 2px solid #0c87f2; color: #1a1a2e; }
+    .subtitle { color: #666; margin-bottom: 30px; }
+    .back-link { display: inline-block; margin-bottom: 20px; color: #0c87f2; text-decoration: none; font-weight: 500; }
+    .back-link:hover { text-decoration: underline; }
+    .link-card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid #e0e0e0; display: flex; gap: 16px; align-items: flex-start; transition: border-color 0.2s; }
+    .link-card:hover { border-color: #0c87f2; }
+    .link-icon { font-size: 1.8em; flex-shrink: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f0f7ff; border-radius: 10px; }
+    .link-info { flex: 1; }
+    .link-title { font-weight: 700; font-size: 1.05em; color: #1a1a2e; margin-bottom: 4px; }
+    .link-title a { color: inherit; text-decoration: none; }
+    .link-title a:hover { color: #0c87f2; }
+    .link-desc { color: #666; font-size: 0.9em; margin-bottom: 6px; }
+    .link-url { font-size: 0.8em; direction: ltr; display: inline-block; }
+    .link-url a { color: #0c87f2; text-decoration: none; word-break: break-all; }
+    .link-url a:hover { text-decoration: underline; }
+    .link-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .tag { padding: 2px 10px; border-radius: 20px; font-size: 0.75em; font-weight: 500; background: #f0f0f0; color: #555; }
+    .tag-ai { background: #e8f5e9; color: #2e7d32; }
+    .tag-security { background: #fce4ec; color: #c62828; }
+    .tag-setup { background: #e3f2fd; color: #1565c0; }
+    .tag-hebrew { background: #fff3e0; color: #e65100; }
+    .credit { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #888; font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <a href="index.html" class="back-link">&rarr; חזרה למדריך הראשי</a>
+
+    <h1>לינקים ומשאבים שימושיים</h1>
+    <p class="subtitle">אוסף קישורים למדריכים, כלים ומשאבים מומלצים</p>
+
+    <!-- AI Agents -->
+    <h2>סוכני AI ואוטומציה</h2>
+
+    <div class="link-card">
+      <div class="link-icon">🦀</div>
+      <div class="link-info">
+        <div class="link-title"><a href="https://aviz85.github.io/openclaw-guide/" target="_blank">המדריך הבטיחותי להתקנת OpenClaw</a></div>
+        <div class="link-desc">מדריך מלא בעברית להתקנת סוכן AI אוטונומי על שרת מרוחק — כולל VPN, חומת אש, הקשחת SSH, וחיבור טלגרם. מאת רני אלבג וויין.</div>
+        <div class="link-url"><a href="https://aviz85.github.io/openclaw-guide/">aviz85.github.io/openclaw-guide</a></div>
+        <div class="link-tags">
+          <span class="tag tag-ai">AI</span>
+          <span class="tag tag-security">אבטחה</span>
+          <span class="tag tag-setup">התקנה</span>
+          <span class="tag tag-hebrew">עברית</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Credit -->
+    <div class="credit">
+      <p>נבנה באמצעות Claude Code</p>
+    </div>
+
+  </div>
+</body>
+</html>
