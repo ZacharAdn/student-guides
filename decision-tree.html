@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision Tree & Overfitting</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6}
+.lang-toggle{position:fixed;top:1.2rem;right:1.5rem;z-index:1000;display:flex;background:rgba(30,41,59,0.95);backdrop-filter:blur(12px);border-radius:12px;border:1px solid #334155;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+[dir="ltr"] .lang-toggle{right:auto;left:1.5rem}
+.lang-btn{background:none;border:none;color:#94a3b8;padding:0.6rem 1rem;cursor:pointer;font-size:0.9rem;transition:all 0.2s}
+.lang-btn.active{color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+section{max-width:900px;margin:0 auto;padding:3rem 1.5rem}
+.hero{text-align:center;padding:4rem 1.5rem 2rem}
+.hero h1{font-size:2.6rem;background:linear-gradient(135deg,#22c55e,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.5rem}
+.hero p{color:#94a3b8;font-size:1.1rem;max-width:600px;margin:0 auto}
+.card{background:#1e293b;border-radius:16px;padding:2rem;margin:1.5rem 0;border:1px solid #334155;box-shadow:0 4px 24px rgba(0,0,0,0.3)}
+h2{color:#c084fc;font-size:1.8rem;margin-bottom:1rem}
+h3{color:#f472b6;font-size:1.2rem;margin-bottom:0.8rem}
+
+/* Tree Visualization */
+.tree-container{text-align:center;overflow-x:auto;padding:1rem 0}
+.tree-svg{max-width:100%}
+.tree-node{cursor:default}
+.tree-node rect{rx:8;ry:8;stroke-width:2;transition:all 0.3s}
+.tree-node text{font-size:11px;fill:#e2e8f0;font-family:inherit}
+.tree-edge{stroke:#475569;stroke-width:2;fill:none}
+
+/* Depth Slider */
+.depth-control{text-align:center;margin:2rem 0}
+.depth-display{font-size:2rem;font-weight:800;color:#818cf8}
+.depth-control input[type=range]{width:100%;max-width:500px;height:8px;-webkit-appearance:none;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444);border-radius:4px;outline:none;margin:1rem 0}
+.depth-control input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,0.4)}
+.depth-labels{display:flex;justify-content:space-between;font-size:0.85rem;color:#94a3b8;max-width:500px;margin:0 auto}
+
+/* Overfitting Chart */
+.chart-area{margin:2rem 0}
+.bars-container{display:flex;align-items:flex-end;justify-content:center;gap:3rem;height:250px;padding:0 2rem}
+.bar-group{display:flex;flex-direction:column;align-items:center;gap:0.5rem}
+.bar-wrapper{display:flex;align-items:flex-end;gap:8px;height:200px}
+.bar{width:60px;border-radius:8px 8px 0 0;transition:height 0.5s ease,background 0.5s ease;position:relative;min-height:4px}
+.bar-val{position:absolute;top:-25px;left:50%;transform:translateX(-50%);font-weight:700;font-size:0.9rem;white-space:nowrap}
+.bar-train{background:linear-gradient(180deg,#22c55e,#16a34a)}
+.bar-test{background:linear-gradient(180deg,#3b82f6,#2563eb)}
+.bar-label{font-size:0.85rem;color:#94a3b8;margin-top:0.3rem}
+.legend{display:flex;gap:2rem;justify-content:center;margin-top:1.5rem}
+.legend-item{display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;color:#94a3b8}
+.legend-dot{width:14px;height:14px;border-radius:4px}
+
+/* Insight */
+.insight-box{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:12px;padding:1.2rem 1.5rem;margin-top:1.5rem;font-size:0.95rem;color:#cbd5e1;min-height:60px;transition:all 0.3s}
+.overfit-warning{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:#fca5a5}
+
+/* How it works */
+.split-demo{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;margin:1.5rem 0}
+.split-box{background:#0f172a;border-radius:12px;padding:1.5rem;border:1px solid #334155;text-align:center}
+.split-arrow{font-size:1.5rem;color:#818cf8}
+.split-condition{font-size:1rem;font-weight:600;color:#f59e0b;padding:0.5rem 1rem;background:rgba(245,158,11,0.1);border-radius:8px;border:1px solid rgba(245,158,11,0.3)}
+.players-viz{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin:0.5rem 0}
+.player-dot{width:10px;height:10px;border-radius:50%;transition:all 0.3s}
+.dot-abuser{background:#ef4444}
+.dot-normal{background:#3b82f6}
+
+/* Takeaways */
+.takeaway{display:flex;gap:1rem;align-items:flex-start;padding:0.8rem 0;border-bottom:1px solid #1e293b}
+.takeaway:last-child{border-bottom:none}
+.takeaway-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0}
+.takeaway-text{color:#cbd5e1;font-size:0.95rem}
+.takeaway-text strong{color:#e2e8f0}
+
+@media(max-width:768px){
+  .hero h1{font-size:2rem}
+  .split-demo{grid-template-columns:1fr}
+  .bars-container{gap:1.5rem}
+  .bar{width:40px}
+  section{padding:2rem 1rem}
+  .lang-toggle{top:0.8rem;right:0.8rem}
+  [dir="ltr"] .lang-toggle{left:0.8rem}
+}
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+  <button class="lang-btn active" id="btn-he" onclick="setLang('he')">HE</button>
+</div>
+
+<div class="hero">
+  <h1 data-i18n="hero_title">Decision Tree & Overfitting</h1>
+  <p data-i18n="hero_subtitle">המודל שואל שאלות על הדאטה ולומד כללים לבד. ומה קורה כשהעץ עמוק מדי?</p>
+</div>
+
+<!-- Section 1: How a tree works -->
+<section>
+  <h2 data-i18n="how_title">איך עץ החלטה עובד</h2>
+  <p data-i18n="how_desc" style="color:#94a3b8;margin-bottom:1.5rem">העץ שואל שאלות כן/לא על הפיצ'רים ומפצל את השחקנים. כמו if/else שהמודל לומד לבד.</p>
+
+  <div class="split-demo">
+    <div class="split-box">
+      <div style="font-weight:600;margin-bottom:0.5rem" data-i18n="all_players">כל השחקנים</div>
+      <div class="players-viz" id="allPlayers"></div>
+      <div style="font-size:0.8rem;color:#94a3b8;margin-top:0.5rem" data-i18n="mix_label">100 שחקנים, 5 אביוזרים</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem">
+      <div class="split-condition" data-i18n="split_q">bonus_amount > 500?</div>
+      <div class="split-arrow">{ }</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem">
+      <div class="split-box" style="border-color:rgba(239,68,68,0.3)">
+        <div style="font-weight:600;color:#ef4444;margin-bottom:0.5rem" data-i18n="yes_split">כן (חשודים)</div>
+        <div class="players-viz" id="yesSplit"></div>
+        <div style="font-size:0.8rem;color:#94a3b8;margin-top:0.5rem" data-i18n="yes_label">12 שחקנים, 4 אביוזרים</div>
+      </div>
+      <div class="split-box" style="border-color:rgba(59,130,246,0.3)">
+        <div style="font-weight:600;color:#3b82f6;margin-bottom:0.5rem" data-i18n="no_split">לא (בסדר)</div>
+        <div class="players-viz" id="noSplit"></div>
+        <div style="font-size:0.8rem;color:#94a3b8;margin-top:0.5rem" data-i18n="no_label">88 שחקנים, 1 אביוזר</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="text-align:center">
+    <h3 data-i18n="split_how_title" style="margin-bottom:0.8rem">איך העץ בוחר איפה לפצל?</h3>
+    <p data-i18n="tree_connect" style="font-size:1rem">העץ בודק <strong style="color:#f59e0b">כל פיצ'ר וכל ערך אפשרי</strong> ושואל: "איזה פיצול יתן לי את הקבוצות הכי נקיות?" — קבוצה אחת עם כמה שיותר אביוזרים, והשנייה עם כמה שפחות. הוא בוחר את הפיצול שממקסם את <strong style="color:#818cf8">ההפרדה בין הקבוצות</strong>. ואז חוזר שוב ושוב על כל תת-קבוצה.</p>
+  </div>
+</section>
+
+<!-- Section 2: Depth & Overfitting -->
+<section>
+  <h2 data-i18n="overfit_title">עומק העץ = Overfitting</h2>
+  <p data-i18n="overfit_desc" style="color:#94a3b8;margin-bottom:1rem">ככל שהעץ עמוק יותר, הוא לומד יותר כללים. אבל מתי הוא מתחיל לשנן במקום ללמוד?</p>
+
+  <div class="depth-control">
+    <div><span data-i18n="depth_label">עומק מקסימלי:</span> <span class="depth-display" id="depthDisplay">5</span></div>
+    <input type="range" id="depthSlider" min="1" max="20" value="5" step="1">
+    <div class="depth-labels">
+      <span data-i18n="depth_shallow">פשוט (underfitting)</span>
+      <span data-i18n="depth_good">מאוזן</span>
+      <span data-i18n="depth_deep">מורכב (overfitting)</span>
+    </div>
+  </div>
+
+  <div class="chart-area">
+    <h3 data-i18n="chart_title" style="text-align:center;margin-bottom:1rem">Precision: Train vs Test</h3>
+    <div class="bars-container">
+      <div class="bar-group">
+        <div class="bar-wrapper">
+          <div class="bar bar-train" id="barTrain" style="height:100px">
+            <div class="bar-val" id="valTrain" style="color:#22c55e">50%</div>
+          </div>
+          <div class="bar bar-test" id="barTest" style="height:90px">
+            <div class="bar-val" id="valTest" style="color:#3b82f6">45%</div>
+          </div>
+        </div>
+        <div class="bar-label">Precision</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-wrapper">
+          <div class="bar bar-train" id="barTrainR" style="height:100px">
+            <div class="bar-val" id="valTrainR" style="color:#22c55e">50%</div>
+          </div>
+          <div class="bar bar-test" id="barTestR" style="height:90px">
+            <div class="bar-val" id="valTestR" style="color:#3b82f6">45%</div>
+          </div>
+        </div>
+        <div class="bar-label">Recall</div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-wrapper">
+          <div class="bar" id="barGap" style="height:10px;background:linear-gradient(180deg,#f59e0b,#ea580c)">
+            <div class="bar-val" id="valGap" style="color:#f59e0b">5%</div>
+          </div>
+        </div>
+        <div class="bar-label" data-i18n="gap_label">פער (Overfitting)</div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div><span>Train</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div><span>Test</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><span data-i18n="legend_gap">פער</span></div>
+    </div>
+  </div>
+
+  <div class="insight-box" id="insightBox"></div>
+</section>
+
+<!-- Section 3: The Solution -->
+<section>
+  <h2 data-i18n="solution_title">הפתרון: Boosting</h2>
+  <div class="card">
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;text-align:center">
+      <div>
+        <h3 data-i18n="single_tree">עץ בודד</h3>
+        <p style="color:#94a3b8;font-size:0.9rem" data-i18n="single_desc">עץ עמוק = שינון.<br>עץ רדוד = פשטני מדי.</p>
+        <div style="font-size:2rem;margin-top:0.5rem">🌳</div>
+      </div>
+      <div style="font-size:2rem;color:#818cf8">VS</div>
+      <div>
+        <h3 style="color:#22c55e" data-i18n="boosting_name">Boosting (LightGBM)</h3>
+        <p style="color:#94a3b8;font-size:0.9rem" data-i18n="boosting_desc">מאות עצים רדודים.<br>כל אחד מתקן את הקודם.</p>
+        <div style="font-size:1.2rem;margin-top:0.5rem">🌱🌱🌱🌱🌱🌱🌱🌱🌱🌱</div>
+      </div>
+    </div>
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #334155;text-align:center">
+      <p data-i18n="boosting_result" style="font-size:1rem"><strong style="color:#22c55e">LightGBM</strong> = הרבה עצים קטנים שעובדים ביחד. כל עץ מתמחה בטעויות שהקודם עשה. התוצאה: <strong>79% Precision</strong> בלי overfitting.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Takeaways -->
+<section>
+  <h2 data-i18n="takeaways_title">נקודות מפתח</h2>
+  <div class="card">
+    <div class="takeaway">
+      <div class="takeaway-num">1</div>
+      <div class="takeaway-text" data-i18n="tk1"><strong>Decision Tree = כללי if/else אוטומטיים.</strong> כמו ההיוריסטיקה של הקולגה, אבל המכונה בוחרת את הכללים מהדאטה.</div>
+    </div>
+    <div class="takeaway">
+      <div class="takeaway-num">2</div>
+      <div class="takeaway-text" data-i18n="tk2"><strong>עומק = סיבוכיות.</strong> עץ רדוד מפספס דפוסים. עץ עמוק משנן. צריך למצוא את האמצע.</div>
+    </div>
+    <div class="takeaway">
+      <div class="takeaway-num">3</div>
+      <div class="takeaway-text" data-i18n="tk3"><strong>הפער בין Train ל-Test הוא הסימן.</strong> Train=100% ו-Test=25%? העץ שינן את הדאטה במקום ללמוד דפוסים.</div>
+    </div>
+    <div class="takeaway">
+      <div class="takeaway-num">4</div>
+      <div class="takeaway-text" data-i18n="tk4"><strong>Boosting פותר את הבעיה.</strong> במקום עץ אחד עמוק, LightGBM משתמש במאות עצים רדודים שמתקנים אחד את השני.</div>
+    </div>
+  </div>
+</section>
+
+<div style="text-align:center;padding:2rem;color:#475569;font-size:0.8rem">Bonim Bina | Decision Tree Explorer</div>
+
+<script>
+// Simulate realistic train/test metrics per depth
+// At low depth: both are moderate, small gap
+// At medium depth: both improve, gap starts
+// At high depth: train perfect, test degrades
+function getMetrics(depth) {
+  // Train precision: improves smoothly to 100%
+  const trainPrec = Math.min(100, 25 + depth * 5 + Math.pow(depth, 1.3));
+  // Test precision: improves until depth~5-6, then degrades
+  const peak = 45;
+  const testPrec = depth <= 6
+    ? 20 + depth * (peak - 20) / 6
+    : Math.max(10, peak - (depth - 6) * 3.5);
+  // Train recall
+  const trainRec = Math.min(100, 20 + depth * 5.5 + Math.pow(depth, 1.2));
+  // Test recall
+  const testRec = depth <= 7
+    ? 15 + depth * (50 - 15) / 7
+    : Math.max(8, 50 - (depth - 7) * 4);
+  return {
+    trainPrec: Math.round(Math.min(100, trainPrec)),
+    testPrec: Math.round(Math.max(5, testPrec)),
+    trainRec: Math.round(Math.min(100, trainRec)),
+    testRec: Math.round(Math.max(5, testRec)),
+  };
+}
+
+const T = {
+  he: {
+    hero_title:'Decision Tree & Overfitting',
+    hero_subtitle:'המודל שואל שאלות על הדאטה ולומד כללים לבד. ומה קורה כשהעץ עמוק מדי?',
+    how_title:'איך עץ החלטה עובד',
+    how_desc:'העץ שואל שאלות כן/לא על הפיצ\'רים ומפצל את השחקנים. כמו if/else שהמודל לומד לבד.',
+    all_players:'כל השחקנים',mix_label:'100 שחקנים, 5 אביוזרים',
+    split_q:'bonus_amount > 500?',
+    yes_split:'כן (חשודים)',yes_label:'12 שחקנים, 4 אביוזרים',
+    no_split:'לא (בסדר)',no_label:'88 שחקנים, 1 אביוזר',
+    split_how_title:'איך העץ בוחר איפה לפצל?',
+    tree_connect:'העץ בודק <strong style="color:#f59e0b">כל פיצ\'ר וכל ערך אפשרי</strong> ושואל: "איזה פיצול יתן לי את הקבוצות הכי נקיות?" — קבוצה אחת עם כמה שיותר אביוזרים, והשנייה עם כמה שפחות. הוא בוחר את הפיצול שממקסם את <strong style="color:#818cf8">ההפרדה בין הקבוצות</strong>. ואז חוזר שוב ושוב על כל תת-קבוצה.',
+    overfit_title:'עומק העץ = Overfitting',
+    overfit_desc:'ככל שהעץ עמוק יותר, הוא לומד יותר כללים. אבל מתי הוא מתחיל לשנן במקום ללמוד?',
+    depth_label:'עומק מקסימלי:',
+    depth_shallow:'פשוט',depth_good:'מאוזן',depth_deep:'מורכב',
+    chart_title:'Precision & Recall: Train vs Test',
+    gap_label:'פער',legend_gap:'פער (Overfitting)',
+    solution_title:'הפתרון: Boosting',
+    single_tree:'עץ בודד',single_desc:'עץ עמוק = שינון.<br>עץ רדוד = פשטני מדי.',
+    boosting_name:'Boosting (LightGBM)',boosting_desc:'מאות עצים רדודים.<br>כל אחד מתקן את הקודם.',
+    boosting_result:'<strong style="color:#22c55e">LightGBM</strong> = הרבה עצים קטנים שעובדים ביחד. כל עץ מתמחה בטעויות שהקודם עשה. התוצאה: <strong>79% Precision</strong> בלי overfitting.',
+    takeaways_title:'נקודות מפתח',
+    tk1:'<strong>Decision Tree = כללי if/else אוטומטיים.</strong> העץ בודק כל פיצ\'ר וכל ערך, ובוחר את הפיצול שנותן את הקבוצות הכי נקיות.',
+    tk2:'<strong>עומק = סיבוכיות.</strong> עץ רדוד מפספס דפוסים. עץ עמוק משנן. צריך למצוא את האמצע.',
+    tk3:'<strong>הפער בין Train ל-Test הוא הסימן.</strong> Train=100% ו-Test=25%? העץ שינן את הדאטה במקום ללמוד דפוסים.',
+    tk4:'<strong>Boosting פותר את הבעיה.</strong> במקום עץ אחד עמוק, LightGBM משתמש במאות עצים רדודים שמתקנים אחד את השני.',
+    insights:{
+      shallow:'עומק 1-2: העץ פשוט מדי. כלל אחד או שניים לא מספיקים לתפוס דפוסי abuse מורכבים. Train ו-Test דומים, אבל שניהם נמוכים.',
+      good:'עומק 4-6: האזור האופטימלי. העץ לומד כללים משמעותיים. הפער בין Train ל-Test קטן. כאן Performance הכי טוב על דאטה חדש.',
+      starting:'עומק 7-10: התחלת overfitting. Train עולה אבל Test מתחיל לרדת. העץ מתחיל לשנן דפוסים ספציפיים בדאטה.',
+      bad:'עומק 11+: overfitting חמור! Train מתקרב ל-100% (שינון מושלם) אבל Test צונח. העץ למד "רעש" בדאטה, לא דפוסים אמיתיים. כל שחקן הפך לכלל ייחודי.',
+    }
+  },
+  en: {
+    hero_title:'Decision Tree & Overfitting',
+    hero_subtitle:'The model asks questions about data and learns rules on its own. And what happens when the tree goes too deep?',
+    how_title:'How a Decision Tree Works',
+    how_desc:'The tree asks yes/no questions about features and splits players. Like if/else rules the model learns on its own.',
+    all_players:'All Players',mix_label:'100 players, 5 abusers',
+    split_q:'bonus_amount > 500?',
+    yes_split:'Yes (Suspicious)',yes_label:'12 players, 4 abusers',
+    no_split:'No (OK)',no_label:'88 players, 1 abuser',
+    split_how_title:'How does the tree choose where to split?',
+    tree_connect:'The tree checks <strong style="color:#f59e0b">every feature and every possible value</strong> and asks: "which split gives me the cleanest groups?" — one group with mostly abusers, the other with mostly normal players. It picks the split that maximizes <strong style="color:#818cf8">separation between groups</strong>. Then repeats on each sub-group.',
+    overfit_title:'Tree Depth = Overfitting',
+    overfit_desc:'The deeper the tree, the more rules it learns. But when does it start memorizing instead of learning?',
+    depth_label:'Max Depth:',
+    depth_shallow:'Simple',depth_good:'Balanced',depth_deep:'Complex',
+    chart_title:'Precision & Recall: Train vs Test',
+    gap_label:'Gap',legend_gap:'Gap (Overfitting)',
+    solution_title:'The Solution: Boosting',
+    single_tree:'Single Tree',single_desc:'Deep tree = memorizing.<br>Shallow tree = too simple.',
+    boosting_name:'Boosting (LightGBM)',boosting_desc:'Hundreds of shallow trees.<br>Each corrects the previous one.',
+    boosting_result:'<strong style="color:#22c55e">LightGBM</strong> = many small trees working together. Each tree specializes in the mistakes of the previous one. Result: <strong>79% Precision</strong> without overfitting.',
+    takeaways_title:'Key Takeaways',
+    tk1:'<strong>Decision Tree = automatic if/else rules.</strong> The tree checks every feature and value, picking the split that creates the cleanest groups.',
+    tk2:'<strong>Depth = complexity.</strong> Shallow tree misses patterns. Deep tree memorizes. Find the middle ground.',
+    tk3:'<strong>The Train/Test gap is the signal.</strong> Train=100% and Test=25%? The tree memorized data instead of learning patterns.',
+    tk4:'<strong>Boosting solves the problem.</strong> Instead of one deep tree, LightGBM uses hundreds of shallow trees correcting each other.',
+    insights:{
+      shallow:'Depth 1-2: tree too simple. One or two rules can\'t capture complex abuse patterns. Train and Test are similar, but both low.',
+      good:'Depth 4-6: the optimal zone. The tree learns meaningful rules. Train/Test gap is small. Best performance on new data.',
+      starting:'Depth 7-10: overfitting begins. Train rises but Test starts dropping. The tree memorizes specific data patterns.',
+      bad:'Depth 11+: severe overfitting! Train approaches 100% (perfect memorization) but Test plummets. The tree learned noise, not patterns.',
+    }
+  }
+};
+
+let currentLang = 'he';
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-he').classList.toggle('active', lang === 'he');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (T[lang][k]) el.innerHTML = T[lang][k];
+  });
+  updateDepth();
+}
+
+// Generate player dots
+function initDots() {
+  const all = document.getElementById('allPlayers');
+  const yes = document.getElementById('yesSplit');
+  const no = document.getElementById('noSplit');
+  all.innerHTML = '';yes.innerHTML = '';no.innerHTML = '';
+  for (let i = 0; i < 100; i++) {
+    const d = document.createElement('div');
+    d.className = 'player-dot ' + (i < 5 ? 'dot-abuser' : 'dot-normal');
+    all.appendChild(d);
+  }
+  // Yes split: 4 abusers + 8 normal
+  for (let i = 0; i < 12; i++) {
+    const d = document.createElement('div');
+    d.className = 'player-dot ' + (i < 4 ? 'dot-abuser' : 'dot-normal');
+    yes.appendChild(d);
+  }
+  // No split: 1 abuser + 87 normal
+  for (let i = 0; i < 88; i++) {
+    const d = document.createElement('div');
+    d.className = 'player-dot ' + (i < 1 ? 'dot-abuser' : 'dot-normal');
+    no.appendChild(d);
+  }
+}
+
+const depthSlider = document.getElementById('depthSlider');
+
+function updateDepth() {
+  const depth = parseInt(depthSlider.value);
+  document.getElementById('depthDisplay').textContent = depth;
+  const m = getMetrics(depth);
+  const maxH = 200;
+
+  document.getElementById('barTrain').style.height = (m.trainPrec / 100 * maxH) + 'px';
+  document.getElementById('barTest').style.height = (m.testPrec / 100 * maxH) + 'px';
+  document.getElementById('valTrain').textContent = m.trainPrec + '%';
+  document.getElementById('valTest').textContent = m.testPrec + '%';
+
+  document.getElementById('barTrainR').style.height = (m.trainRec / 100 * maxH) + 'px';
+  document.getElementById('barTestR').style.height = (m.testRec / 100 * maxH) + 'px';
+  document.getElementById('valTrainR').textContent = m.trainRec + '%';
+  document.getElementById('valTestR').textContent = m.testRec + '%';
+
+  const gap = m.trainPrec - m.testPrec;
+  document.getElementById('barGap').style.height = Math.max(4, gap / 100 * maxH) + 'px';
+  document.getElementById('valGap').textContent = gap + '%';
+
+  // Color the gap bar based on severity
+  const gapBar = document.getElementById('barGap');
+  if (gap < 15) gapBar.style.background = 'linear-gradient(180deg,#22c55e,#16a34a)';
+  else if (gap < 40) gapBar.style.background = 'linear-gradient(180deg,#f59e0b,#ea580c)';
+  else gapBar.style.background = 'linear-gradient(180deg,#ef4444,#dc2626)';
+
+  // Insight
+  const ins = T[currentLang].insights;
+  const box = document.getElementById('insightBox');
+  let insight;
+  if (depth <= 2) { insight = ins.shallow; box.className = 'insight-box'; }
+  else if (depth <= 6) { insight = ins.good; box.className = 'insight-box'; }
+  else if (depth <= 10) { insight = ins.starting; box.className = 'insight-box overfit-warning'; }
+  else { insight = ins.bad; box.className = 'insight-box overfit-warning'; }
+  box.textContent = insight;
+}
+
+depthSlider.addEventListener('input', updateDepth);
+initDots();
+updateDepth();
+</script>
+</body>
+</html>

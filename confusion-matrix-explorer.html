@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confusion Matrix & Threshold Explorer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6}
+.lang-toggle{position:fixed;top:1.2rem;right:1.5rem;z-index:1000;display:flex;background:rgba(30,41,59,0.95);backdrop-filter:blur(12px);border-radius:12px;border:1px solid #334155;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+[dir="ltr"] .lang-toggle{right:auto;left:1.5rem}
+.lang-btn{background:none;border:none;color:#94a3b8;padding:0.6rem 1rem;cursor:pointer;font-size:0.9rem;transition:all 0.2s}
+.lang-btn.active{color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+section{max-width:900px;margin:0 auto;padding:3rem 1.5rem}
+.hero{text-align:center;padding:4rem 1.5rem 2rem}
+.hero h1{font-size:2.6rem;background:linear-gradient(135deg,#818cf8,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.5rem}
+.hero p{color:#94a3b8;font-size:1.1rem;max-width:600px;margin:0 auto}
+.card{background:#1e293b;border-radius:16px;padding:2rem;margin:1.5rem 0;border:1px solid #334155;box-shadow:0 4px 24px rgba(0,0,0,0.3)}
+h2{color:#c084fc;font-size:1.8rem;margin-bottom:1rem}
+h3{color:#f472b6;font-size:1.2rem;margin-bottom:0.8rem}
+
+/* Concepts */
+.concepts{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin:1.5rem 0}
+.concept{background:#0f172a;border-radius:12px;padding:1.2rem;border:1px solid #334155;text-align:center}
+.concept-icon{font-size:2rem;margin-bottom:0.5rem}
+.concept-name{font-weight:700;font-size:1.1rem;margin-bottom:0.3rem}
+.concept-desc{font-size:0.85rem;color:#94a3b8}
+
+/* Explain Cards — the new explanation section */
+.explain-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0}
+.explain-card{background:#1e293b;border-radius:14px;padding:1.4rem 1.5rem;border:1px solid #334155;position:relative;overflow:hidden}
+.explain-card::before{content:'';position:absolute;top:0;right:0;left:0;height:3px}
+.explain-card.card-precision::before{background:linear-gradient(90deg,#22c55e,#16a34a)}
+.explain-card.card-recall::before{background:linear-gradient(90deg,#3b82f6,#2563eb)}
+.explain-card.card-threshold::before{background:linear-gradient(90deg,#f59e0b,#d97706)}
+.explain-card.card-accuracy::before{background:linear-gradient(90deg,#f472b6,#ec4899)}
+.explain-card-header{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.6rem}
+.explain-card-tag{font-size:0.7rem;font-weight:700;padding:0.2rem 0.6rem;border-radius:6px;text-transform:uppercase;letter-spacing:0.05em}
+.card-precision .explain-card-tag{background:rgba(34,197,94,0.15);color:#22c55e}
+.card-recall .explain-card-tag{background:rgba(59,130,246,0.15);color:#3b82f6}
+.card-threshold .explain-card-tag{background:rgba(245,158,11,0.15);color:#f59e0b}
+.card-accuracy .explain-card-tag{background:rgba(244,114,182,0.15);color:#f472b6}
+.explain-card-title{font-size:1.1rem;font-weight:700;color:#e2e8f0}
+.explain-card-def{font-size:0.95rem;color:#cbd5e1;margin-bottom:0.7rem;line-height:1.5}
+.explain-card-example{font-size:0.85rem;color:#94a3b8;background:#0f172a;border-radius:8px;padding:0.8rem 1rem;border-right:3px solid #334155;line-height:1.5}
+[dir="ltr"] .explain-card-example{border-right:none;border-left:3px solid #334155}
+.explain-card-example strong{color:#e2e8f0}
+.card-accuracy .explain-card-example{border-right-color:#ef4444}
+[dir="ltr"] .card-accuracy .explain-card-example{border-right-color:transparent;border-left-color:#ef4444}
+.explain-card.card-threshold,.explain-card.card-accuracy{grid-column:span 1}
+.explain-card.card-prcurve::before{background:linear-gradient(90deg,#818cf8,#6366f1)}
+.card-prcurve .explain-card-tag{background:rgba(129,140,248,0.15);color:#818cf8}
+.pr-explain-wrapper{max-width:600px;margin:0 auto 1.5rem}
+
+/* Threshold Explorer */
+.threshold-area{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0}
+.confusion-matrix{display:grid;grid-template-columns:auto 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:4px;max-width:350px;margin:0 auto}
+.cm-header{text-align:center;padding:0.5rem;font-size:0.8rem;color:#94a3b8;font-weight:600}
+.cm-cell{padding:1.2rem 0.8rem;text-align:center;border-radius:8px;font-size:1.1rem;font-weight:700;transition:all 0.3s}
+.cm-tp{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3)}
+.cm-fp{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
+.cm-fn{background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)}
+.cm-tn{background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)}
+.cm-label{font-size:0.7rem;display:block;color:#94a3b8;margin-top:0.3rem;font-weight:400}
+.metrics-panel{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.metric-box{background:#0f172a;border-radius:12px;padding:1rem;text-align:center;border:1px solid #334155;transition:all 0.3s}
+.metric-box.highlight{border-color:#f59e0b;box-shadow:0 0 12px rgba(245,158,11,0.15)}
+.metric-value{font-size:2rem;font-weight:800}
+.metric-label{font-size:0.85rem;color:#94a3b8;margin-top:0.2rem}
+.metric-explain{font-size:0.75rem;color:#64748b;margin-top:0.2rem}
+.metric-plain{font-size:0.75rem;color:#cbd5e1;margin-top:0.4rem;min-height:2em;transition:all 0.3s}
+.metric-prec .metric-value{color:#22c55e}
+.metric-rec .metric-value{color:#3b82f6}
+.metric-acc .metric-value{color:#f472b6}
+.metric-f1 .metric-value{color:#c084fc}
+.metric-acc .metric-plain{color:#ef4444;font-weight:600}
+.slider-area{margin:1.5rem 0;text-align:center}
+.slider-area input[type=range]{width:100%;max-width:700px;height:8px;-webkit-appearance:none;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444);border-radius:4px;outline:none;margin:1rem 0}
+.slider-area input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,0.4)}
+.slider-labels{display:flex;justify-content:space-between;font-size:0.85rem;color:#94a3b8;max-width:700px;margin:0 auto}
+.threshold-value{font-size:1.8rem;font-weight:700;color:#f59e0b}
+.insight-box{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:12px;padding:1.2rem 1.5rem;margin-top:1.5rem;font-size:0.95rem;color:#cbd5e1;min-height:60px;transition:all 0.3s}
+
+/* Threshold Explainer Banner */
+.threshold-explainer{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:flex-start;gap:0.8rem}
+.threshold-explainer-icon{font-size:1.5rem;flex-shrink:0;margin-top:0.1rem}
+.threshold-explainer-text{font-size:0.9rem;color:#cbd5e1;line-height:1.6}
+.threshold-explainer-text strong{color:#f59e0b}
+
+/* PR Curve */
+.pr-curve-container{margin:2rem 0;text-align:center}
+.pr-curve-container svg{max-width:100%;height:auto}
+
+/* Key Takeaways */
+.takeaway{display:flex;gap:1rem;align-items:flex-start;padding:0.8rem 0;border-bottom:1px solid #1e293b}
+.takeaway:last-child{border-bottom:none}
+.takeaway-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0}
+.takeaway-text{color:#cbd5e1;font-size:0.95rem}
+.takeaway-text strong{color:#e2e8f0}
+
+@media(max-width:768px){
+  .hero h1{font-size:2rem}
+  .threshold-area{grid-template-columns:1fr}
+  .concepts{grid-template-columns:1fr}
+  .explain-cards{grid-template-columns:1fr}
+  .explain-card.card-threshold,.explain-card.card-accuracy{grid-column:span 1}
+  section{padding:2rem 1rem}
+  .lang-toggle{top:0.8rem;right:0.8rem}
+  [dir="ltr"] .lang-toggle{left:0.8rem}
+}
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+  <button class="lang-btn active" id="btn-he" onclick="setLang('he')">HE</button>
+</div>
+
+<div class="hero">
+  <h1 data-i18n="hero_title">Confusion Matrix & Threshold</h1>
+  <p data-i18n="hero_subtitle">למה Accuracy חסר משמעות, ואיך Precision ו-Recall באמת מודדים את המודל שלך</p>
+</div>
+
+<!-- Section 1: The 4 Concepts -->
+<section>
+  <h2 data-i18n="concepts_title">ארבעת המדדים</h2>
+  <p data-i18n="concepts_intro" style="color:#94a3b8;margin-bottom:1rem">10,000 שחקנים. 30 אביוזרים (0.3%). המודל מסמן חלק מהשחקנים כחשודים. ארבע תוצאות אפשריות:</p>
+  <div class="concepts">
+    <div class="concept" style="border-color:rgba(34,197,94,0.4)">
+      <div class="concept-icon" style="color:#22c55e">TP</div>
+      <div class="concept-name" style="color:#22c55e" data-i18n="tp_name">True Positive</div>
+      <div class="concept-desc" data-i18n="tp_desc">סימנו אביוזר, והוא באמת אביוזר. תפסנו נכון.</div>
+    </div>
+    <div class="concept" style="border-color:rgba(239,68,68,0.4)">
+      <div class="concept-icon" style="color:#ef4444">FP</div>
+      <div class="concept-name" style="color:#ef4444" data-i18n="fp_name">False Positive</div>
+      <div class="concept-desc" data-i18n="fp_desc">סימנו שחקן תקין כאביוזר. צוות הריסק חוקר לחינם.</div>
+    </div>
+    <div class="concept" style="border-color:rgba(251,191,36,0.4)">
+      <div class="concept-icon" style="color:#fbbf24">FN</div>
+      <div class="concept-name" style="color:#fbbf24" data-i18n="fn_name">False Negative</div>
+      <div class="concept-desc" data-i18n="fn_desc">אביוזר שהמודל פספס. הוא ממשיך לנצל את המערכת.</div>
+    </div>
+    <div class="concept" style="border-color:rgba(59,130,246,0.4)">
+      <div class="concept-icon" style="color:#3b82f6">TN</div>
+      <div class="concept-name" style="color:#3b82f6" data-i18n="tn_name">True Negative</div>
+      <div class="concept-desc" data-i18n="tn_desc">שחקן תקין שלא סימנו. הכל טוב.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 1.5: Deep Explanations -->
+<section>
+  <h2 data-i18n="explain_title">מה כל מדד באמת אומר</h2>
+  <div class="explain-cards">
+
+    <!-- Precision -->
+    <div class="explain-card card-precision">
+      <div class="explain-card-header">
+        <span class="explain-card-tag">Precision</span>
+        <span class="explain-card-title" data-i18n="expl_prec_title">דיוק הסימון</span>
+      </div>
+      <div class="explain-card-def" data-i18n="expl_prec_def">מתוך כל מי שהמודל סימן כאביוזר, כמה באמת אביוזרים?</div>
+      <div class="explain-card-example" data-i18n="expl_prec_example">המודל מסמן <strong>100 שחקנים</strong>. 79 מהם אביוזרים אמיתיים. זה <strong>79% Precision</strong>. 21 הנותרים? נחקרו לחינם.</div>
+    </div>
+
+    <!-- Recall -->
+    <div class="explain-card card-recall">
+      <div class="explain-card-header">
+        <span class="explain-card-tag">Recall</span>
+        <span class="explain-card-title" data-i18n="expl_rec_title">כיסוי האביוזרים</span>
+      </div>
+      <div class="explain-card-def" data-i18n="expl_rec_def">מתוך כל האביוזרים שקיימים במערכת, כמה המודל באמת תפס?</div>
+      <div class="explain-card-example" data-i18n="expl_rec_example">יש <strong>30 אביוזרים אמיתיים</strong>. המודל תפס 15. זה <strong>50% Recall</strong>. 15 חמקו ועדיין מנצלים את המערכת.</div>
+    </div>
+
+    <!-- Threshold -->
+    <div class="explain-card card-threshold">
+      <div class="explain-card-header">
+        <span class="explain-card-tag">Threshold</span>
+        <span class="explain-card-title" data-i18n="expl_thresh_title">הסף</span>
+      </div>
+      <div class="explain-card-def" data-i18n="expl_thresh_def">המודל נותן לכל שחקן ציון מ-0 עד 1. הסף הוא הקו שאתה מחליט: מעליו = חשוד.</div>
+      <div class="explain-card-example" data-i18n="expl_thresh_example">סף <strong>גבוה</strong> (0.7) = מסמנים רק שחקנים שהמודל בטוח בהם. פחות סימונים, יותר מדויקים. סף <strong>נמוך</strong> (0.1) = תופסים יותר אביוזרים, אבל גם מסמנים תמימים.<br><strong>תזיז את הסלייד למטה ותראה בעצמך.</strong></div>
+    </div>
+
+    <!-- Accuracy -->
+    <div class="explain-card card-accuracy">
+      <div class="explain-card-header">
+        <span class="explain-card-tag">Accuracy</span>
+        <span class="explain-card-title" data-i18n="expl_acc_title">למה הוא משקר</span>
+      </div>
+      <div class="explain-card-def" data-i18n="expl_acc_def">כמה תשובות נכונות מתוך הכל. נשמע טוב? זו מלכודת.</div>
+      <div class="explain-card-example" data-i18n="expl_acc_example">עם 0.3% אביוזרים, מודל שאומר על כולם <strong>"תקין"</strong> מקבל <strong>99.7% Accuracy</strong>. מספר מרשים. מודל חסר תועלת. לא תפס אף אביוזר אחד.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Section 2: Interactive Threshold -->
+<section>
+  <h2 data-i18n="explorer_title">הזז את הסף</h2>
+
+  <div class="threshold-explainer">
+    <div class="threshold-explainer-icon">&#9881;</div>
+    <div class="threshold-explainer-text" data-i18n="thresh_banner">המודל נתן ציון לכל שחקן. עכשיו אתה מחליט: <strong>מאיזה ציון מסמנים?</strong> תזיז שמאלה = תופס יותר אביוזרים (אבל גם יותר טעויות). תזיז ימינה = פחות טעויות (אבל מפספס אביוזרים). תראה איך המספרים למטה משתנים.</div>
+  </div>
+
+  <div class="slider-area">
+    <div><span data-i18n="threshold_label">סף (Threshold):</span> <span class="threshold-value" id="thresholdDisplay">0.40</span></div>
+    <input type="range" id="thresholdSlider" min="0" max="24" value="12" step="1">
+    <div class="slider-labels">
+      <span data-i18n="slider_low">תופס הכל (Recall גבוה)</span>
+      <span data-i18n="slider_high">רק הבטוחים (Precision גבוה)</span>
+    </div>
+  </div>
+
+  <div class="threshold-area">
+    <div>
+      <h3 data-i18n="cm_title" style="text-align:center;margin-bottom:1rem">Confusion Matrix</h3>
+      <div class="confusion-matrix">
+        <div class="cm-header"></div>
+        <div class="cm-header" data-i18n="cm_pred_pos">חזה: אביוזר</div>
+        <div class="cm-header" data-i18n="cm_pred_neg">חזה: תקין</div>
+        <div class="cm-header" data-i18n="cm_actual_pos">באמת<br>אביוזר</div>
+        <div class="cm-cell cm-tp" id="cmTP">14<span class="cm-label">TP</span></div>
+        <div class="cm-cell cm-fn" id="cmFN">16<span class="cm-label">FN</span></div>
+        <div class="cm-header" data-i18n="cm_actual_neg">באמת<br>תקין</div>
+        <div class="cm-cell cm-fp" id="cmFP">4<span class="cm-label">FP</span></div>
+        <div class="cm-cell cm-tn" id="cmTN">9,966<span class="cm-label">TN</span></div>
+      </div>
+    </div>
+    <div>
+      <h3 data-i18n="metrics_title" style="text-align:center;margin-bottom:1rem">Metrics</h3>
+      <div class="metrics-panel">
+        <div class="metric-box metric-prec" id="boxPrec">
+          <div class="metric-value" id="metricPrec">77.8%</div>
+          <div class="metric-label">Precision</div>
+          <div class="metric-explain" data-i18n="prec_explain">TP / (TP + FP)</div>
+          <div class="metric-plain" id="plainPrec"></div>
+        </div>
+        <div class="metric-box metric-rec">
+          <div class="metric-value" id="metricRec">46.7%</div>
+          <div class="metric-label">Recall</div>
+          <div class="metric-explain" data-i18n="rec_explain">TP / (TP + FN)</div>
+          <div class="metric-plain" id="plainRec"></div>
+        </div>
+        <div class="metric-box metric-acc">
+          <div class="metric-value" id="metricAcc">99.8%</div>
+          <div class="metric-label">Accuracy</div>
+          <div class="metric-explain" data-i18n="acc_explain">(TP + TN) / Total</div>
+          <div class="metric-plain" id="plainAcc"></div>
+        </div>
+        <div class="metric-box metric-f1">
+          <div class="metric-value" id="metricF1">59.6%</div>
+          <div class="metric-label">F1 Score</div>
+          <div class="metric-explain" data-i18n="f1_explain">2 * P * R / (P + R)</div>
+          <div class="metric-plain" id="plainF1"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight-box" id="insightBox"></div>
+
+  <div class="pr-curve-container">
+    <h3 data-i18n="pr_title" style="margin-bottom:1rem">Precision-Recall Curve</h3>
+
+    <div class="pr-explain-wrapper">
+      <div class="explain-card card-prcurve">
+        <div class="explain-card-header">
+          <span class="explain-card-tag">PR-AUC</span>
+          <span class="explain-card-title" data-i18n="expl_prc_title">העקומה שמסכמת הכל</span>
+        </div>
+        <div class="explain-card-def" data-i18n="expl_prc_def">הגרף מראה את ה-tradeoff: ככל שתופסים יותר אביוזרים (Recall גבוה), כך יותר סימונים יהיו שווא (Precision יורד). העקומה מראה את כל האפשרויות.</div>
+        <div class="explain-card-example" data-i18n="expl_prc_example"><strong>PR-AUC</strong> = מספר אחד שמסכם את כל העקומה.<br><strong>1.0</strong> = מודל מושלם. <strong>0.003</strong> = הטלת מטבע (ה-base rate).<br>המודל שלך: <strong>0.52</strong> — הרבה מעל רנדום.</div>
+      </div>
+    </div>
+
+    <svg id="prCurve" viewBox="0 0 420 310" style="background:#0f172a;border:1px solid #334155;border-radius:12px">
+      <line x1="50" y1="260" x2="390" y2="260" stroke="#334155"/>
+      <line x1="50" y1="260" x2="50" y2="20" stroke="#334155"/>
+      <text x="220" y="300" fill="#94a3b8" text-anchor="middle" font-size="12">Recall</text>
+      <text x="15" y="140" fill="#94a3b8" text-anchor="middle" font-size="12" transform="rotate(-90,15,140)">Precision</text>
+      <line x1="50" y1="140" x2="390" y2="140" stroke="#1e293b" stroke-dasharray="4"/>
+      <line x1="220" y1="260" x2="220" y2="20" stroke="#1e293b" stroke-dasharray="4"/>
+      <text x="45" y="265" fill="#64748b" text-anchor="end" font-size="10">0%</text>
+      <text x="45" y="143" fill="#64748b" text-anchor="end" font-size="10">50%</text>
+      <text x="45" y="25" fill="#64748b" text-anchor="end" font-size="10">100%</text>
+      <text x="50" y="278" fill="#64748b" text-anchor="middle" font-size="10">0%</text>
+      <text x="220" y="278" fill="#64748b" text-anchor="middle" font-size="10">50%</text>
+      <text x="390" y="278" fill="#64748b" text-anchor="middle" font-size="10">100%</text>
+      <line x1="50" y1="259" x2="390" y2="259" stroke="#ef4444" stroke-width="1" stroke-dasharray="6,3" opacity="0.4"/>
+      <text x="395" y="259" fill="#ef4444" font-size="9" opacity="0.5">0.3%</text>
+      <path id="prPath" fill="none" stroke="#818cf8" stroke-width="2.5"/>
+      <circle id="prDot" cx="0" cy="0" r="7" fill="#f59e0b" stroke="#fff" stroke-width="2"/>
+    </svg>
+  </div>
+</section>
+
+<!-- Section 3: Key Takeaways -->
+<section>
+  <h2 data-i18n="takeaways_title">נקודות מפתח</h2>
+  <div class="card">
+    <div class="takeaway">
+      <div class="takeaway-num">1</div>
+      <div class="takeaway-text" data-i18n="tk1"><strong>Accuracy חסר משמעות בדאטה לא מאוזן.</strong> מודל שאומר תמיד "תקין" מקבל 99.7%. Precision הוא המדד שחשוב.</div>
+    </div>
+    <div class="takeaway">
+      <div class="takeaway-num">2</div>
+      <div class="takeaway-text" data-i18n="tk2"><strong>Precision = מתוך מי שסימנת, כמה באמת?</strong> 79% Precision = 4 מתוך 5 שסימנת הם אביוזרים אמיתיים.</div>
+    </div>
+    <div class="takeaway">
+      <div class="takeaway-num">3</div>
+      <div class="takeaway-text" data-i18n="tk3"><strong>Recall = מתוך כל האביוזרים, כמה תפסת?</strong> 48% Recall = תפסת כמעט חצי. השאר חמקו.</div>
+    </div>
+    <div class="takeaway">
+      <div class="takeaway-num">4</div>
+      <div class="takeaway-text" data-i18n="tk4"><strong>הסף שולט בtradeoff.</strong> תמיד יש מתח בין Precision ל-Recall. אי אפשר למקסם את שניהם.</div>
+    </div>
+    <div class="takeaway">
+      <div class="takeaway-num">5</div>
+      <div class="takeaway-text" data-i18n="tk5"><strong>PR-AUC מסכם הכל.</strong> מספר אחד (0 עד 1) שאומר כמה טוב המודל בכל הthresholds האפשריים. רנדום = 0.003, המודל שלך = 0.52.</div>
+    </div>
+  </div>
+</section>
+
+<div style="text-align:center;padding:2rem;color:#475569;font-size:0.8rem">Bonim Bina | Confusion Matrix Explorer</div>
+
+<script>
+const TOTAL=10000, POS=30, NEG=TOTAL-POS;
+const CURVE=[
+  [0.00,30,9970],[0.02,30,4500],[0.05,29,1800],[0.08,29,700],
+  [0.10,28,380],[0.13,27,180],[0.15,26,110],[0.18,25,60],
+  [0.20,24,38],[0.25,22,18],[0.30,20,10],[0.35,18,6],
+  [0.40,14,4],[0.45,13,3],[0.50,11,2],[0.55,10,1],
+  [0.60,8,1],[0.65,7,0],[0.70,5,0],[0.75,4,0],
+  [0.80,3,0],[0.85,2,0],[0.90,1,0],[0.95,0,0],[1.00,0,0]
+];
+
+const T={
+  he:{
+    hero_title:'Confusion Matrix & Threshold',
+    hero_subtitle:'למה Accuracy חסר משמעות, ואיך Precision ו-Recall באמת מודדים את המודל שלך',
+    concepts_title:'ארבעת המדדים',
+    concepts_intro:'10,000 שחקנים. 30 אביוזרים (0.3%). המודל מסמן חלק מהשחקנים כחשודים. ארבע תוצאות אפשריות:',
+    tp_name:'True Positive',tp_desc:'סימנו אביוזר, והוא באמת אביוזר. תפסנו נכון.',
+    fp_name:'False Positive',fp_desc:'סימנו שחקן תקין כאביוזר. צוות הריסק חוקר לחינם.',
+    fn_name:'False Negative',fn_desc:'אביוזר שהמודל פספס. הוא ממשיך לנצל את המערכת.',
+    tn_name:'True Negative',tn_desc:'שחקן תקין שלא סימנו. הכל טוב.',
+    explain_title:'מה כל מדד באמת אומר',
+    expl_prec_title:'דיוק הסימון',
+    expl_prec_def:'מתוך כל מי שהמודל סימן כאביוזר, כמה באמת אביוזרים?',
+    expl_prec_example:'המודל מסמן <strong>100 שחקנים</strong>. 79 מהם אביוזרים אמיתיים. זה <strong>79% Precision</strong>. 21 הנותרים? נחקרו לחינם.',
+    expl_rec_title:'כיסוי האביוזרים',
+    expl_rec_def:'מתוך כל האביוזרים שקיימים במערכת, כמה המודל באמת תפס?',
+    expl_rec_example:'יש <strong>30 אביוזרים אמיתיים</strong>. המודל תפס 15. זה <strong>50% Recall</strong>. 15 חמקו ועדיין מנצלים את המערכת.',
+    expl_thresh_title:'הסף',
+    expl_thresh_def:'המודל נותן לכל שחקן ציון מ-0 עד 1. הסף הוא הקו שאתה מחליט: מעליו = חשוד.',
+    expl_thresh_example:'סף <strong>גבוה</strong> (0.7) = מסמנים רק שחקנים שהמודל בטוח בהם. פחות סימונים, יותר מדויקים. סף <strong>נמוך</strong> (0.1) = תופסים יותר אביוזרים, אבל גם מסמנים תמימים.<br><strong>תזיז את הסלייד למטה ותראה בעצמך.</strong>',
+    expl_acc_title:'למה הוא משקר',
+    expl_acc_def:'כמה תשובות נכונות מתוך הכל. נשמע טוב? זו מלכודת.',
+    expl_acc_example:'עם 0.3% אביוזרים, מודל שאומר על כולם <strong>"תקין"</strong> מקבל <strong>99.7% Accuracy</strong>. מספר מרשים. מודל חסר תועלת. לא תפס אף אביוזר אחד.',
+    expl_prc_title:'העקומה שמסכמת הכל',
+    expl_prc_def:'הגרף מראה את ה-tradeoff: ככל שתופסים יותר אביוזרים (Recall גבוה), כך יותר סימונים יהיו שווא (Precision יורד). העקומה מראה את כל האפשרויות.',
+    expl_prc_example:'<strong>PR-AUC</strong> = מספר אחד שמסכם את כל העקומה.<br><strong>1.0</strong> = מודל מושלם. <strong>0.003</strong> = הטלת מטבע (ה-base rate).<br>המודל שלך: <strong>0.52</strong> — הרבה מעל רנדום.',
+    thresh_banner:'המודל נתן ציון לכל שחקן. עכשיו אתה מחליט: <strong>מאיזה ציון מסמנים?</strong> תזיז שמאלה = תופס יותר אביוזרים (אבל גם יותר טעויות). תזיז ימינה = פחות טעויות (אבל מפספס אביוזרים). תראה איך המספרים למטה משתנים.',
+    explorer_title:'הזז את הסף',
+    threshold_label:'סף (Threshold):',
+    slider_low:'תופס הכל (Recall גבוה)',slider_high:'רק הבטוחים (Precision גבוה)',
+    cm_title:'Confusion Matrix',cm_pred_pos:'חזה: אביוזר',cm_pred_neg:'חזה: תקין',
+    cm_actual_pos:'באמת<br>אביוזר',cm_actual_neg:'באמת<br>תקין',
+    metrics_title:'Metrics',
+    prec_explain:'TP / (TP + FP)',rec_explain:'TP / (TP + FN)',acc_explain:'(TP + TN) / Total',f1_explain:'2 * P * R / (P + R)',
+    pr_title:'Precision-Recall Curve',
+    takeaways_title:'נקודות מפתח',
+    tk1:'<strong>Accuracy חסר משמעות בדאטה לא מאוזן.</strong> מודל שאומר תמיד "תקין" מקבל 99.7%. Precision הוא המדד שחשוב.',
+    tk2:'<strong>Precision = מתוך מי שסימנת, כמה באמת?</strong> 79% Precision = 4 מתוך 5 שסימנת הם אביוזרים אמיתיים.',
+    tk3:'<strong>Recall = מתוך כל האביוזרים, כמה תפסת?</strong> 48% Recall = תפסת כמעט חצי. השאר חמקו.',
+    tk4:'<strong>הסף שולט בtradeoff.</strong> תמיד יש מתח בין Precision ל-Recall. אי אפשר למקסם את שניהם.',
+    tk5:'<strong>PR-AUC מסכם הכל.</strong> מספר אחד (0 עד 1) שאומר כמה טוב המודל בכל הthresholds האפשריים. רנדום = 0.003, המודל שלך = 0.52.',
+    insights:{
+      veryLow:'סף 0: מסמנים את כולם. Recall=100% אבל Precision=0.3%. צוות הריסק צריך לחקור 10,000 שחקנים כדי למצוא 30. לא מעשי.',
+      low:'סף נמוך: תופסים כמעט את כל האביוזרים, אבל גם מסמנים מאות תמימים. שים לב שAccuracy כמעט לא משתנה, כי 99.7% מהשחקנים תמיד תקינים.',
+      medium:'סף בינוני: Precision עולה, Recall יורד. הtradeoff בפעולה. שים לב איך Accuracy נשאר קבוע למרות שהמודל השתפר מאוד.',
+      omer:'נקודת העבודה של המודל שלך (threshold=0.40). 78% Precision = מתוך 18 שסימנת, 14 אמיתיים. הצוות חוקר ביעילות.',
+      high:'סף גבוה: כמעט אפס FP, אבל מפספסים הרבה אביוזרים. אם צוות הריסק קטן, זה הסף הנכון.',
+      veryHigh:'סף 1.0: לא מסמנים אף אחד. Precision לא מוגדר. Recall=0%. כמו מודל שתמיד אומר "תקין".',
+    },
+    plain:{
+      precNA:'לא סימנו אף אחד',
+      precTpl:'מתוך {total} שסומנו, {tp} אמיתיים',
+      recTpl:'תפסנו {tp} מתוך {pos} אביוזרים',
+      accTrap:'זה מספר מטעה!',
+      f1Tpl:'האיזון בין Precision ל-Recall',
+    }
+  },
+  en:{
+    hero_title:'Confusion Matrix & Threshold',
+    hero_subtitle:'Why Accuracy is meaningless, and how Precision & Recall really measure your model',
+    concepts_title:'The Four Outcomes',
+    concepts_intro:'10,000 players. 30 are abusers (0.3%). The model flags some as suspicious. Four possible outcomes:',
+    tp_name:'True Positive',tp_desc:'Flagged an abuser who really is one. Caught correctly.',
+    fp_name:'False Positive',fp_desc:'Flagged a normal player as abuser. Risk team investigates for nothing.',
+    fn_name:'False Negative',fn_desc:'An abuser the model missed. They keep exploiting the system.',
+    tn_name:'True Negative',tn_desc:'A normal player we didn\'t flag. All good.',
+    explain_title:'What Each Metric Really Means',
+    expl_prec_title:'Flagging Accuracy',
+    expl_prec_def:'Of everyone the model flagged as abuser, how many actually are?',
+    expl_prec_example:'Model flags <strong>100 players</strong>. 79 are real abusers. That\'s <strong>79% Precision</strong>. The other 21? Investigated for nothing.',
+    expl_rec_title:'Abuser Coverage',
+    expl_rec_def:'Of all real abusers in the system, how many did the model actually catch?',
+    expl_rec_example:'There are <strong>30 real abusers</strong>. Model catches 15. That\'s <strong>50% Recall</strong>. 15 slipped through and are still exploiting the system.',
+    expl_thresh_title:'The Cutoff',
+    expl_thresh_def:'The model scores every player 0 to 1. The threshold is the line you draw: above it = suspicious.',
+    expl_thresh_example:'<strong>High</strong> threshold (0.7) = only flag players the model is confident about. Fewer flags, more accurate. <strong>Low</strong> threshold (0.1) = catch more abusers, but also flag innocents.<br><strong>Move the slider below and see for yourself.</strong>',
+    expl_acc_title:'Why It Lies',
+    expl_acc_def:'How many correct answers total. Sounds great? It\'s a trap.',
+    expl_acc_example:'With 0.3% abusers, a model that says <strong>"everyone is fine"</strong> gets <strong>99.7% Accuracy</strong>. Impressive number. Useless model. Didn\'t catch a single abuser.',
+    expl_prc_title:'The Curve That Summarizes Everything',
+    expl_prc_def:'The graph shows the tradeoff: the more abusers you catch (high Recall), the more flags are false (Precision drops). The curve shows all possible operating points.',
+    expl_prc_example:'<strong>PR-AUC</strong> = one number summarizing the entire curve.<br><strong>1.0</strong> = perfect model. <strong>0.003</strong> = coin flip (the base rate).<br>Your model: <strong>0.52</strong> — way above random.',
+    thresh_banner:'The model scored every player. Now you decide: <strong>above what score do we flag?</strong> Slide left = catch more abusers (but more mistakes too). Slide right = fewer mistakes (but miss abusers). Watch the numbers change below.',
+    explorer_title:'Move the Threshold',
+    threshold_label:'Threshold:',
+    slider_low:'Catch everyone (High Recall)',slider_high:'Only the sure ones (High Precision)',
+    cm_title:'Confusion Matrix',cm_pred_pos:'Predicted: Abuser',cm_pred_neg:'Predicted: Normal',
+    cm_actual_pos:'Actually<br>Abuser',cm_actual_neg:'Actually<br>Normal',
+    metrics_title:'Metrics',
+    prec_explain:'TP / (TP + FP)',rec_explain:'TP / (TP + FN)',acc_explain:'(TP + TN) / Total',f1_explain:'2 * P * R / (P + R)',
+    pr_title:'Precision-Recall Curve',
+    takeaways_title:'Key Takeaways',
+    tk1:'<strong>Accuracy is meaningless with imbalanced data.</strong> A model that always says "normal" gets 99.7%. Precision is what matters.',
+    tk2:'<strong>Precision = of those flagged, how many are real?</strong> 79% Precision = 4 out of 5 flagged are real abusers.',
+    tk3:'<strong>Recall = of all abusers, how many caught?</strong> 48% Recall = caught nearly half. The rest slipped through.',
+    tk4:'<strong>Threshold controls the tradeoff.</strong> There\'s always tension between Precision and Recall. Can\'t maximize both.',
+    tk5:'<strong>PR-AUC summarizes everything.</strong> One number (0 to 1) showing how good the model is across all thresholds. Random = 0.003, your model = 0.52.',
+    insights:{
+      veryLow:'Threshold 0: flag everyone. Recall=100% but Precision=0.3%. Team must investigate 10,000 players to find 30. Not practical.',
+      low:'Low threshold: catching almost all abusers, but also flagging hundreds of innocents. Notice Accuracy barely changes because 99.7% of players are always normal.',
+      medium:'Medium threshold: Precision rises, Recall drops. The tradeoff in action. Notice Accuracy stays nearly constant despite the model improving dramatically.',
+      omer:'Your model\'s operating point (threshold=0.40). 78% Precision = of 18 flagged, 14 are real. The team investigates efficiently.',
+      high:'High threshold: nearly zero FP, but missing many abusers. If the risk team is small, this is the right threshold.',
+      veryHigh:'Threshold 1.0: flag nobody. Precision undefined. Recall=0%. Same as a model that always says "normal".',
+    },
+    plain:{
+      precNA:'Flagged nobody',
+      precTpl:'Of {total} flagged, {tp} are real',
+      recTpl:'Caught {tp} of {pos} abusers',
+      accTrap:'This number is misleading!',
+      f1Tpl:'Balance of Precision & Recall',
+    }
+  }
+};
+
+let currentLang='he';
+function setLang(lang){
+  currentLang=lang;
+  document.documentElement.lang=lang;
+  document.documentElement.dir=lang==='he'?'rtl':'ltr';
+  document.getElementById('btn-en').classList.toggle('active',lang==='en');
+  document.getElementById('btn-he').classList.toggle('active',lang==='he');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(T[lang][k])el.innerHTML=T[lang][k];
+  });
+  updateThreshold();
+}
+
+const slider=document.getElementById('thresholdSlider');
+function fmt(n){return n.toLocaleString();}
+
+function updateThreshold(){
+  const idx=parseInt(slider.value);
+  const[threshold,tp,fp]=CURVE[Math.min(idx,CURVE.length-1)];
+  const fn=POS-tp,tn=NEG-fp;
+  document.getElementById('thresholdDisplay').textContent=threshold.toFixed(2);
+  document.getElementById('cmTP').innerHTML=fmt(tp)+'<span class="cm-label">TP</span>';
+  document.getElementById('cmFN').innerHTML=fmt(fn)+'<span class="cm-label">FN</span>';
+  document.getElementById('cmFP').innerHTML=fmt(fp)+'<span class="cm-label">FP</span>';
+  document.getElementById('cmTN').innerHTML=fmt(tn)+'<span class="cm-label">TN</span>';
+  const prec=(tp+fp)===0?null:tp/(tp+fp);
+  const rec=tp/POS;
+  const acc=(tp+tn)/TOTAL;
+  const f1=prec!==null&&(prec+rec)>0?2*prec*rec/(prec+rec):0;
+  document.getElementById('metricPrec').textContent=prec===null?'N/A':(prec*100).toFixed(1)+'%';
+  document.getElementById('metricRec').textContent=(rec*100).toFixed(1)+'%';
+  document.getElementById('metricAcc').textContent=(acc*100).toFixed(1)+'%';
+  document.getElementById('metricF1').textContent=(f1*100).toFixed(1)+'%';
+  // Highlight precision box when it's the interesting one
+  document.getElementById('boxPrec').classList.toggle('highlight',prec!==null&&prec>0.5);
+
+  // Update plain-language explanations under each metric
+  const p=T[currentLang].plain;
+  const totalFlagged=tp+fp;
+  if(prec===null){
+    document.getElementById('plainPrec').textContent=p.precNA;
+  } else {
+    document.getElementById('plainPrec').textContent=p.precTpl.replace('{total}',fmt(totalFlagged)).replace('{tp}',fmt(tp));
+  }
+  document.getElementById('plainRec').textContent=p.recTpl.replace('{tp}',fmt(tp)).replace('{pos}',fmt(POS));
+  document.getElementById('plainAcc').textContent=p.accTrap;
+  document.getElementById('plainF1').textContent=p.f1Tpl;
+
+  const ins=T[currentLang].insights;
+  let insight;
+  if(idx<=0)insight=ins.veryLow;
+  else if(idx<=4)insight=ins.low;
+  else if(idx<=10)insight=ins.medium;
+  else if(idx>=23)insight=ins.veryHigh;
+  else if(idx>=17)insight=ins.high;
+  else insight=ins.omer;
+  document.getElementById('insightBox').textContent=insight;
+  drawPR(idx);
+}
+
+function drawPR(activeIdx){
+  const padL=50,padT=20,plotW=340,plotH=240;
+  let path='';const pts=[];
+  for(let i=0;i<CURVE.length;i++){
+    const[,tp,fp]=CURVE[i];
+    const rec=tp/POS,prec=(tp+fp)===0?1:tp/(tp+fp);
+    const x=padL+rec*plotW,y=padT+(1-prec)*plotH;
+    pts.push({x,y});
+    path+=(i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1);
+  }
+  document.getElementById('prPath').setAttribute('d',path);
+  if(activeIdx<pts.length){
+    document.getElementById('prDot').setAttribute('cx',pts[activeIdx].x);
+    document.getElementById('prDot').setAttribute('cy',pts[activeIdx].y);
+  }
+}
+
+slider.addEventListener('input',updateThreshold);
+updateThreshold();
+</script>
+</body>
+</html>
