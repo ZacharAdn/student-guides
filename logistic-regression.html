@@ -113,7 +113,54 @@ canvas{border-radius:12px;border:1px solid #334155;max-width:100%;cursor:crossha
   <div class="insight-box" id="insightBox" data-i18n="scatter_insight">הזז את הקו ונסה להפריד בין האדומים לכחולים. שים לב: קו ישר לא תמיד מצליח להפריד בצורה מושלמת.</div>
 </section>
 
-<!-- Section 2: Sigmoid -->
+<!-- Section 2: The Math -->
+<section>
+  <h2 data-i18n="math_title">המתמטיקה — איך נוצר הקו</h2>
+
+  <div class="card">
+    <h3 data-i18n="math_step1_title" style="color:#f59e0b">שלב 1: חישוב ציון לכל שחקן</h3>
+    <p data-i18n="math_step1_desc" style="color:#94a3b8;margin-bottom:0.8rem">המודל לומד משקל (weight) לכל פיצ'ר, וסוכם:</p>
+    <div class="formula" style="font-size:1.05rem;text-align:center;display:block">
+      z = w₁ · bonus_amount + w₂ · deposit_frequency + b
+    </div>
+    <p data-i18n="math_step1_explain" style="color:#94a3b8;margin-top:0.8rem">
+      <strong style="color:#818cf8">w₁, w₂</strong> = משקלים שהמודל למד מהדאטה. פיצ'ר חשוב = משקל גבוה.<br>
+      <strong style="color:#818cf8">b</strong> = bias (הזזה). קובע איפה הקו עובר.<br>
+      <strong style="color:#818cf8">z</strong> = הציון. חיובי = חשוד. שלילי = תקין.
+    </p>
+  </div>
+
+  <div class="card">
+    <h3 data-i18n="math_step2_title" style="color:#f59e0b">שלב 2: הקו = איפה z שווה 0</h3>
+    <p data-i18n="math_step2_desc" style="color:#94a3b8;margin-bottom:0.8rem">קו ההפרדה שהזזת למעלה? זה בדיוק כל הנקודות שבהן:</p>
+    <div class="formula" style="font-size:1.05rem;text-align:center;display:block">
+      w₁ · bonus_amount + w₂ · deposit_frequency + b = 0
+    </div>
+    <p data-i18n="math_step2_explain" style="color:#94a3b8;margin-top:0.8rem">
+      זה בדיוק <strong style="color:#e2e8f0">y = ax + b</strong> — משוואת קו ישר.<br>
+      הסליידר של <strong style="color:#f59e0b">הזווית</strong> שינה את היחס בין w₁ ל-w₂.<br>
+      הסליידר של <strong style="color:#f59e0b">המיקום</strong> שינה את b.
+    </p>
+  </div>
+
+  <div class="card">
+    <h3 data-i18n="math_step3_title" style="color:#f59e0b">שלב 3: Sigmoid הופכת z להסתברות</h3>
+    <p data-i18n="math_step3_desc" style="color:#94a3b8">
+      z גדול וחיובי? הסתברות גבוהה להיות אביוזר.<br>
+      z קרוב ל-0? המודל לא בטוח (50/50).<br>
+      z שלילי? כנראה תקין.
+    </p>
+    <div class="formula" style="font-size:1.05rem;text-align:center;display:block">
+      P(abuser) = 1 / (1 + e<sup style="font-size:0.8em">-z</sup>)
+    </div>
+  </div>
+
+  <div class="insight-box" data-i18n="math_summary">
+    <strong>לסיכום:</strong> המודל לומד משקלים (w) לכל פיצ'ר. המשקלים יוצרים קו ישר. Sigmoid הופכת את המרחק מהקו להסתברות. עם 2 פיצ'רים זה y=ax+b. עם 133 פיצ'רים (כמו אצלך) זה אותו עיקרון, רק ב-133 ממדים.
+  </div>
+</section>
+
+<!-- Section 3: Sigmoid -->
 <section>
   <h2 data-i18n="sigmoid_title">Sigmoid: ממרחק להסתברות</h2>
 
@@ -217,6 +264,16 @@ const T = {
     scatter_desc:'נקודות אדומות = אביוזרים. כחולות = תקינים. הזז את הקו כדי להפריד ביניהם.',
     angle_label:'זווית הקו',offset_label:'מיקום הקו',misclass:'טעויות',
     scatter_insight:'הזז את הקו ונסה להפריד בין האדומים לכחולים. שים לב: קו ישר לא תמיד מצליח להפריד בצורה מושלמת.',
+    math_title:'המתמטיקה — איך נוצר הקו',
+    math_step1_title:'שלב 1: חישוב ציון לכל שחקן',
+    math_step1_desc:'המודל לומד משקל (weight) לכל פיצ\'ר, וסוכם:',
+    math_step1_explain:'<strong style="color:#818cf8">w₁, w₂</strong> = משקלים שהמודל למד מהדאטה. פיצ\'ר חשוב = משקל גבוה.<br><strong style="color:#818cf8">b</strong> = bias (הזזה). קובע איפה הקו עובר.<br><strong style="color:#818cf8">z</strong> = הציון. חיובי = חשוד. שלילי = תקין.',
+    math_step2_title:'שלב 2: הקו = איפה z שווה 0',
+    math_step2_desc:'קו ההפרדה שהזזת למעלה? זה בדיוק כל הנקודות שבהן:',
+    math_step2_explain:'זה בדיוק <strong style="color:#e2e8f0">y = ax + b</strong> — משוואת קו ישר.<br>הסליידר של <strong style="color:#f59e0b">הזווית</strong> שינה את היחס בין w₁ ל-w₂.<br>הסליידר של <strong style="color:#f59e0b">המיקום</strong> שינה את b.',
+    math_step3_title:'שלב 3: Sigmoid הופכת z להסתברות',
+    math_step3_desc:'z גדול וחיובי? הסתברות גבוהה להיות אביוזר.<br>z קרוב ל-0? המודל לא בטוח (50/50).<br>z שלילי? כנראה תקין.',
+    math_summary:'<strong>לסיכום:</strong> המודל לומד משקלים (w) לכל פיצ\'ר. המשקלים יוצרים קו ישר. Sigmoid הופכת את המרחק מהקו להסתברות. עם 2 פיצ\'רים זה y=ax+b. עם 133 פיצ\'רים (כמו אצלך) זה אותו עיקרון, רק ב-133 ממדים.',
     sigmoid_title:'Sigmoid: ממרחק להסתברות',
     sig_explain1:'<strong style="color:#f59e0b">Sigmoid</strong> היא הפונקציה שהופכת את המרחק מקו ההפרדה להסתברות בין 0 ל-1.',
     sig_explain2:'שחקן <strong>רחוק מהקו בצד האביוזרים</strong> = הסתברות גבוהה (קרוב ל-1).<br>שחקן <strong>קרוב לקו</strong> = המודל לא בטוח (קרוב ל-0.5).<br>שחקן <strong>רחוק בצד התקינים</strong> = הסתברות נמוכה (קרוב ל-0).',
@@ -248,6 +305,16 @@ const T = {
     scatter_desc:'Red dots = abusers. Blue dots = normals. Move the line to separate them.',
     angle_label:'Line Angle',offset_label:'Line Position',misclass:'Misclassified',
     scatter_insight:'Move the line and try to separate reds from blues. Notice: a straight line can\'t always perfectly separate them.',
+    math_title:'The Math — How the Line is Formed',
+    math_step1_title:'Step 1: Score each player',
+    math_step1_desc:'The model learns a weight for each feature, then sums them up:',
+    math_step1_explain:'<strong style="color:#818cf8">w₁, w₂</strong> = weights the model learned from data. Important feature = high weight.<br><strong style="color:#818cf8">b</strong> = bias (offset). Determines where the line passes.<br><strong style="color:#818cf8">z</strong> = the score. Positive = suspicious. Negative = normal.',
+    math_step2_title:'Step 2: The line = where z equals 0',
+    math_step2_desc:'The decision boundary you moved above? It\'s exactly all points where:',
+    math_step2_explain:'This is exactly <strong style="color:#e2e8f0">y = ax + b</strong> — a straight line equation.<br>The <strong style="color:#f59e0b">angle</strong> slider changed the ratio between w₁ and w₂.<br>The <strong style="color:#f59e0b">position</strong> slider changed b.',
+    math_step3_title:'Step 3: Sigmoid converts z to probability',
+    math_step3_desc:'z large and positive? High probability of being an abuser.<br>z close to 0? Model is uncertain (50/50).<br>z negative? Probably normal.',
+    math_summary:'<strong>Summary:</strong> The model learns weights (w) for each feature. The weights create a straight line. Sigmoid converts distance from the line to probability. With 2 features it\'s y=ax+b. With 133 features (like yours) it\'s the same principle, just in 133 dimensions.',
     sigmoid_title:'Sigmoid: Distance to Probability',
     sig_explain1:'<strong style="color:#f59e0b">Sigmoid</strong> converts the distance from the decision boundary into a probability between 0 and 1.',
     sig_explain2:'Player <strong>far from the line on the abuser side</strong> = high probability (close to 1).<br>Player <strong>close to the line</strong> = model uncertain (close to 0.5).<br>Player <strong>far on the normal side</strong> = low probability (close to 0).',
