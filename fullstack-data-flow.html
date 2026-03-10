@@ -220,7 +220,7 @@ const T = {
     flow_dir_res: 'RESPONSE: Database &rarr; Browser',
     flow_dir_done: 'COMPLETE ROUND TRIP',
     flow_hint_title: 'Ready',
-    flow_hint_text: 'Click "Step" to send a prediction through the full stack. Each step highlights the layer, the concept, and the actual code.',
+    flow_hint_text: 'Press <strong>Spacebar</strong> or click "Step" to advance. Each step highlights the layer, the concept, and the actual code.',
     btn_step: 'Step',
     btn_auto: 'Auto Play',
     btn_reset: 'Reset',
@@ -252,7 +252,7 @@ const T = {
     flow_dir_res: 'RESPONSE: Database &rarr; דפדפן',
     flow_dir_done: 'הלוך-חזור שלם',
     flow_hint_title: 'מוכן',
-    flow_hint_text: 'לחצו "צעד" כדי לשלוח ניחוש דרך כל השכבות. כל צעד מדגיש את השכבה, המושג, והקוד האמיתי.',
+    flow_hint_text: 'לחצו <strong>רווח (Spacebar)</strong> או "צעד" כדי להתקדם. כל צעד מדגיש את השכבה, המושג, והקוד האמיתי.',
     btn_step: 'צעד',
     btn_auto: 'הפעלה אוטומטית',
     btn_reset: 'איפוס',
@@ -503,8 +503,20 @@ function flowAuto() {
   flowAutoInterval = setInterval(() => {
     if (flowPhase === 'done') { clearInterval(flowAutoInterval); flowAutoInterval = null; return; }
     flowStep();
-  }, 1400);
+  }, 2800);
 }
+
+// Spacebar triggers step (only when flow section is visible)
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && !e.target.matches('input,textarea,button')) {
+    const flowSection = document.getElementById('flowTrack');
+    const rect = flowSection.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      e.preventDefault();
+      flowStep();
+    }
+  }
+});
 
 function flowReset() {
   if (flowAutoInterval) { clearInterval(flowAutoInterval); flowAutoInterval = null; }
