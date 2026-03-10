@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full-Stack Data Flow — Interactive Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f172a;--bg-card:#1e293b;--border:#334155;--border-hover:#475569;
+  --text:#e2e8f0;--text2:#cbd5e1;--muted:#94a3b8;
+  --purple:#818cf8;--violet:#c084fc;--pink:#f472b6;--indigo:#6366f1;
+  --deep:#4f46e5;--vivid:#7c3aed;--bright:#8b5cf6;
+  --green:#22c55e;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7;overflow-x:hidden}
+a{color:var(--purple);text-decoration:none}
+.lang-toggle{position:fixed;top:1.2rem;right:1.5rem;z-index:1000;display:flex;background:rgba(30,41,59,.92);backdrop-filter:blur(12px);border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.lang-btn{background:none;border:none;color:var(--muted);padding:.6rem 1.1rem;font-size:.9rem;cursor:pointer;transition:.2s}
+.lang-btn.active{background:var(--indigo);color:#fff;font-weight:600}
+section{max-width:960px;margin:0 auto;padding:3.5rem 1.5rem}
+.hero{text-align:center;padding:5rem 1.5rem 3rem}
+.hero h1{font-size:3rem;background:linear-gradient(135deg,var(--purple),var(--violet),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.8rem}
+.hero p{font-size:1.25rem;color:var(--text2);max-width:700px;margin:0 auto}
+.card{background:var(--bg-card);border-radius:16px;padding:2rem;margin:1.5rem 0;border:1px solid var(--border);box-shadow:0 4px 24px rgba(0,0,0,.3)}
+h2{color:var(--violet);font-size:1.8rem;margin-bottom:1rem}
+h3{color:var(--pink);font-size:1.25rem;margin-bottom:.7rem}
+.subtitle{color:var(--muted);font-size:1rem;margin-bottom:1.5rem}
+
+/* Analogy */
+.analogy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin:1.5rem 0}
+.analogy-card{background:var(--bg);border-radius:14px;padding:1.5rem;border:1px solid var(--border);text-align:center;transition:.3s}
+.analogy-card:hover{border-color:var(--purple);transform:translateY(-3px)}
+.analogy-icon{font-size:2.8rem;margin-bottom:.8rem}
+.analogy-label{font-weight:700;color:var(--purple);font-size:1.1rem;margin-bottom:.4rem}
+.analogy-tech{color:var(--pink);font-size:.85rem;margin-bottom:.5rem}
+.analogy-desc{color:var(--text2);font-size:.9rem}
+
+/* Layers Explorer */
+.layer-tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.layer-tab{padding:.7rem 1.4rem;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--muted);cursor:pointer;font-size:.95rem;font-weight:600;transition:.2s}
+.layer-tab.active{border-color:var(--indigo);background:var(--indigo);color:#fff}
+.layer-tab:hover:not(.active){border-color:var(--border-hover);color:var(--text)}
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+.concept-card{background:var(--bg);border-radius:12px;padding:1.2rem;border:1px solid var(--border);cursor:pointer;transition:.3s}
+.concept-card:hover{border-color:var(--purple);transform:translateY(-2px)}
+.concept-card.expanded{border-color:var(--violet);grid-column:1/-1}
+.concept-name{color:var(--pink);font-weight:700;font-size:1rem;margin-bottom:.3rem}
+.concept-brief{color:var(--text2);font-size:.85rem}
+.concept-detail{display:none;margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--border)}
+.concept-card.expanded .concept-detail{display:block}
+.concept-example{background:var(--bg-card);border-radius:8px;padding:.8rem;font-family:'SF Mono',Consolas,monospace;font-size:.82rem;color:var(--green);margin-top:.5rem;overflow-x:auto}
+
+/* Flow Demo */
+.flow-demo{position:relative;margin:2rem 0}
+.flow-track{display:flex;flex-direction:column;gap:0;align-items:center}
+.flow-node{width:100%;max-width:600px;padding:1.2rem 1.5rem;border-radius:14px;border:2px solid var(--border);background:var(--bg);transition:.4s;position:relative;opacity:.5}
+.flow-node.active{opacity:1;border-color:var(--indigo);box-shadow:0 0 25px rgba(99,102,241,.3)}
+.flow-node.done{opacity:.7;border-color:var(--green)}
+.flow-node-label{font-weight:700;font-size:1rem;margin-bottom:.3rem}
+.flow-node-concept{color:var(--violet);font-size:.85rem;font-weight:600}
+.flow-node-code{font-family:'SF Mono',Consolas,monospace;font-size:.8rem;color:var(--green);background:rgba(0,0,0,.3);border-radius:8px;padding:.6rem;margin-top:.5rem;white-space:pre;overflow-x:auto}
+.flow-arrow{width:2px;height:32px;background:var(--border);position:relative;transition:.4s}
+.flow-arrow.active{background:var(--indigo);box-shadow:0 0 8px rgba(99,102,241,.5)}
+.flow-arrow.done{background:var(--green)}
+.flow-arrow::after{content:'';position:absolute;bottom:-4px;left:-4px;width:10px;height:10px;border-right:2px solid;border-bottom:2px solid;border-color:inherit;transform:rotate(45deg)}
+.flow-controls{display:flex;gap:.8rem;justify-content:center;margin:1.5rem 0;flex-wrap:wrap}
+.btn{padding:.7rem 1.5rem;border-radius:10px;border:none;font-size:1rem;font-weight:600;cursor:pointer;transition:.2s}
+.btn:hover{transform:scale(1.05)}
+.btn-primary{background:linear-gradient(135deg,var(--indigo),var(--bright));color:#fff}
+.btn-primary:hover{box-shadow:0 0 20px rgba(99,102,241,.4)}
+.btn-secondary{background:var(--bg);border:1px solid var(--border);color:var(--text)}
+.btn-secondary:hover{border-color:var(--border-hover)}
+.btn-return{background:linear-gradient(135deg,var(--green),#16a34a);color:#fff}
+.flow-info{background:var(--bg);border-radius:12px;padding:1.2rem;border:1px solid var(--border);margin-top:1rem;min-height:80px}
+.flow-info-title{color:var(--pink);font-weight:700;margin-bottom:.3rem}
+.flow-info-text{color:var(--text2);font-size:.95rem}
+.flow-direction{text-align:center;font-size:.9rem;color:var(--muted);margin:.5rem 0;font-weight:600}
+.flow-direction.return-mode{color:var(--green)}
+
+/* AI Prompting */
+.prompt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+.prompt-card{background:var(--bg);border-radius:12px;padding:1.2rem;border:1px solid var(--border);cursor:pointer;transition:.3s}
+.prompt-card:hover{border-color:var(--amber)}
+.prompt-want{color:var(--amber);font-weight:600;font-size:.95rem;margin-bottom:.5rem}
+.prompt-say{font-family:'SF Mono',Consolas,monospace;font-size:.85rem;color:var(--green);background:rgba(0,0,0,.3);border-radius:8px;padding:.7rem;line-height:1.5}
+.prompt-say .kw{color:var(--pink);font-weight:700}
+
+/* Takeaways */
+.takeaway{display:flex;gap:1rem;align-items:flex-start;padding:1rem 0;border-bottom:1px solid var(--border)}
+.takeaway:last-child{border-bottom:none}
+.takeaway-icon{font-size:1.5rem;flex-shrink:0;margin-top:.1rem}
+.takeaway-text{color:var(--text2);font-size:1rem}
+.takeaway-text strong{color:var(--text)}
+
+/* Footer */
+footer{text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;border-top:1px solid var(--border)}
+
+@media(max-width:768px){
+  .hero h1{font-size:2.2rem}
+  .hero{padding:4rem 1rem 2rem}
+  .analogy-grid{grid-template-columns:1fr}
+  .concept-grid{grid-template-columns:1fr}
+  .prompt-grid{grid-template-columns:1fr}
+  section{padding:2.5rem 1rem}
+  .lang-toggle{top:.8rem;right:.8rem}
+  .lang-btn{padding:.5rem .8rem;font-size:.85rem}
+  .flow-node{padding:1rem}
+}
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" id="btn-he" onclick="setLang('he')">HE</button>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <h1 data-i18n="hero_title">Full-Stack Data Flow</h1>
+  <p data-i18n="hero_subtitle">How data travels from a button click to the database and back. Every concept you need to talk to AI about web apps.</p>
+</div>
+
+<!-- ANALOGY -->
+<section>
+  <h2 data-i18n="analogy_title">The Restaurant Analogy</h2>
+  <p class="subtitle" data-i18n="analogy_sub">Every web app works like a restaurant. Three players, one flow.</p>
+  <div class="analogy-grid">
+    <div class="analogy-card">
+      <div class="analogy-icon">🍽️</div>
+      <div class="analogy-label">Frontend</div>
+      <div class="analogy-tech" data-i18n="a_fe_tech">The Menu & Table</div>
+      <div class="analogy-desc" data-i18n="a_fe_desc">What the customer sees. They read the menu, place an order, and wait for food. They never go to the kitchen.</div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">👨‍🍳</div>
+      <div class="analogy-label">Backend</div>
+      <div class="analogy-tech" data-i18n="a_be_tech">The Waiter + Kitchen</div>
+      <div class="analogy-desc" data-i18n="a_be_desc">The waiter (API) takes the order, checks if the customer is allowed to order alcohol (Authorization), and passes it to the kitchen (Logic).</div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🏪</div>
+      <div class="analogy-label">Database</div>
+      <div class="analogy-tech" data-i18n="a_db_tech">The Storage Room</div>
+      <div class="analogy-desc" data-i18n="a_db_desc">All ingredients (data) are stored here. The kitchen pulls what it needs. Without it, you'd have to put all the food on the table upfront (Hardcoded).</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONCEPT EXPLORER -->
+<section>
+  <h2 data-i18n="concepts_title">Concept Explorer</h2>
+  <p class="subtitle" data-i18n="concepts_sub">Click a layer to see its concepts. Click any concept to expand.</p>
+  <div class="layer-tabs">
+    <button class="layer-tab active" onclick="showLayer('db')" data-i18n="tab_db">Database</button>
+    <button class="layer-tab" onclick="showLayer('be')" data-i18n="tab_be">Backend</button>
+    <button class="layer-tab" onclick="showLayer('fe')" data-i18n="tab_fe">Frontend</button>
+  </div>
+  <div class="concept-grid" id="conceptGrid"></div>
+</section>
+
+<!-- INTERACTIVE FLOW DEMO -->
+<section>
+  <h2 data-i18n="flow_title">Interactive Flow: Submit a Prediction</h2>
+  <p class="subtitle" data-i18n="flow_sub">Step through a real full-stack operation. Watch data travel from the browser to the database and back.</p>
+  <div class="card">
+    <div class="flow-direction" id="flowDirection" data-i18n="flow_dir_req">REQUEST: Browser &rarr; Database</div>
+    <div class="flow-demo">
+      <div class="flow-track" id="flowTrack"></div>
+    </div>
+    <div class="flow-controls">
+      <button class="btn btn-primary" onclick="flowStep()" id="btnStep" data-i18n="btn_step">Step</button>
+      <button class="btn btn-primary" onclick="flowAuto()" id="btnAuto" data-i18n="btn_auto">Auto Play</button>
+      <button class="btn btn-secondary" onclick="flowReset()" data-i18n="btn_reset">Reset</button>
+    </div>
+    <div class="flow-info" id="flowInfo">
+      <div class="flow-info-title" id="flowInfoTitle" data-i18n="flow_hint_title">Ready</div>
+      <div class="flow-info-text" id="flowInfoText" data-i18n="flow_hint_text">Click "Step" to send a prediction through the full stack. Each step highlights the layer, the concept, and the actual code.</div>
+    </div>
+  </div>
+</section>
+
+<!-- AI PROMPTING GUIDE -->
+<section>
+  <h2 data-i18n="prompt_title">AI Prompting Guide</h2>
+  <p class="subtitle" data-i18n="prompt_sub">The right vocabulary gets you 10x better AI answers. Click to copy.</p>
+  <div class="prompt-grid" id="promptGrid"></div>
+</section>
+
+<!-- TAKEAWAYS -->
+<section>
+  <h2 data-i18n="takeaway_title">Key Takeaways</h2>
+  <div id="takeaways"></div>
+</section>
+
+<footer data-i18n="footer">Built for Bonim Bina mentoring &bull; Full-Stack Data Flow Guide</footer>
+
+<script>
+const T = {
+  en: {
+    hero_title: 'Full-Stack Data Flow',
+    hero_subtitle: 'How data travels from a button click to the database and back. Every concept you need to talk to AI about web apps.',
+    analogy_title: 'The Restaurant Analogy',
+    analogy_sub: 'Every web app works like a restaurant. Three players, one flow.',
+    a_fe_tech: 'The Menu & Table',
+    a_fe_desc: 'What the customer sees. They read the menu, place an order, and wait for food. They never go to the kitchen.',
+    a_be_tech: 'The Waiter + Kitchen',
+    a_be_desc: 'The waiter (API) takes the order, checks if the customer can order alcohol (Authorization), and passes it to the kitchen (Logic).',
+    a_db_tech: 'The Storage Room',
+    a_db_desc: 'All ingredients (data) live here. The kitchen pulls what it needs. Without it, you\'d put all food on the table upfront (Hardcoded).',
+    concepts_title: 'Concept Explorer',
+    concepts_sub: 'Click a layer to see its concepts. Click any concept to expand.',
+    tab_db: 'Database',
+    tab_be: 'Backend',
+    tab_fe: 'Frontend',
+    flow_title: 'Interactive Flow: Submit a Prediction',
+    flow_sub: 'Step through a real full-stack operation. Watch data travel from the browser to the database and back.',
+    flow_dir_req: 'REQUEST: Browser &rarr; Database',
+    flow_dir_res: 'RESPONSE: Database &rarr; Browser',
+    flow_dir_done: 'COMPLETE ROUND TRIP',
+    flow_hint_title: 'Ready',
+    flow_hint_text: 'Click "Step" to send a prediction through the full stack. Each step highlights the layer, the concept, and the actual code.',
+    btn_step: 'Step',
+    btn_auto: 'Auto Play',
+    btn_reset: 'Reset',
+    prompt_title: 'AI Prompting Guide',
+    prompt_sub: 'The right vocabulary gets you 10x better AI answers. Click to copy.',
+    takeaway_title: 'Key Takeaways',
+    footer: 'Built for Bonim Bina mentoring &bull; Full-Stack Data Flow Guide',
+    copied: 'Copied!'
+  },
+  he: {
+    hero_title: 'זרימת מידע ב-Full-Stack',
+    hero_subtitle: 'איך מידע נוסע מלחיצת כפתור לדאטאבייס ובחזרה. כל מושג שצריך כדי לדבר עם AI על אפליקציות Web.',
+    analogy_title: 'אנלוגיית המסעדה',
+    analogy_sub: 'כל אפליקציית Web עובדת כמו מסעדה. שלושה שחקנים, זרימה אחת.',
+    a_fe_tech: 'התפריט והשולחן',
+    a_fe_desc: 'מה שהלקוח רואה. הוא קורא את התפריט, מזמין, ומחכה לאוכל. הוא אף פעם לא נכנס למטבח.',
+    a_be_tech: 'המלצר + המטבח',
+    a_be_desc: 'המלצר (API) מקבל הזמנה, בודק אם הלקוח מורשה להזמין אלכוהול (Authorization), ומעביר למטבח (לוגיקה).',
+    a_db_tech: 'המחסן',
+    a_db_desc: 'כל חומרי הגלם (הנתונים) נשמרים פה. המטבח מושך מה שצריך. בלי מחסן, היית שם את כל האוכל על השולחן מראש (Hardcoded).',
+    concepts_title: 'מגלה המושגים',
+    concepts_sub: 'לחצו על שכבה כדי לראות את המושגים שלה. לחצו על מושג כדי להרחיב.',
+    tab_db: 'Database',
+    tab_be: 'Backend',
+    tab_fe: 'Frontend',
+    flow_title: 'זרימה אינטראקטיבית: שליחת ניחוש',
+    flow_sub: 'צעד אחרי צעד דרך פעולת Full-Stack אמיתית. צפו בנתונים נוסעים מהדפדפן לדאטאבייס ובחזרה.',
+    flow_dir_req: 'REQUEST: דפדפן &larr; Database',
+    flow_dir_res: 'RESPONSE: Database &rarr; דפדפן',
+    flow_dir_done: 'הלוך-חזור שלם',
+    flow_hint_title: 'מוכן',
+    flow_hint_text: 'לחצו "צעד" כדי לשלוח ניחוש דרך כל השכבות. כל צעד מדגיש את השכבה, המושג, והקוד האמיתי.',
+    btn_step: 'צעד',
+    btn_auto: 'הפעלה אוטומטית',
+    btn_reset: 'איפוס',
+    prompt_title: 'מדריך Prompting ל-AI',
+    prompt_sub: 'המילים הנכונות מקבלות תשובות טובות פי 10 מ-AI. לחצו להעתקה.',
+    takeaway_title: 'נקודות מפתח',
+    footer: 'נבנה עבור Bonim Bina mentoring &bull; Full-Stack Data Flow Guide',
+    copied: '!הועתק'
+  }
+};
+
+/* --- CONCEPTS DATA --- */
+const concepts = {
+  db: [
+    {id:'schema', name:'Schema', brief:{en:'Table structure — columns and types',he:'מבנה הטבלאות — עמודות וטיפוסים'}, detail:{en:'The blueprint of your database. Defines what tables exist, what columns each has, and what type of data they hold (text, number, date, etc.).',he:'התוכנית האדריכלית של הדאטאבייס. מגדיר אילו טבלאות קיימות, אילו עמודות בכל אחת, ואיזה סוג נתונים הן מכילות (טקסט, מספר, תאריך וכו\').'}, example:'users(id uuid, name text, email text)'},
+    {id:'ddl', name:'DDL', brief:{en:'Data Definition Language — commands that define structure',he:'Data Definition Language — פקודות שמגדירות מבנה'}, detail:{en:'The SQL commands that create, modify, or delete the structure itself (not the data). Think of it as building the shelves, not stocking them.',he:'פקודות SQL שיוצרות, משנות או מוחקות את המבנה עצמו (לא את הנתונים). כמו לבנות את המדפים, לא למלא אותם.'}, example:'CREATE TABLE games (\n  id uuid PRIMARY KEY,\n  kick_off_time timestamptz\n);'},
+    {id:'dml', name:'DML / CRUD', brief:{en:'Create, Read, Update, Delete — the 4 basic operations',he:'Create, Read, Update, Delete — 4 הפעולות הבסיסיות'}, detail:{en:'90% of every backend in the world is CRUD. If you know INSERT, SELECT, UPDATE, DELETE — you know how to build an API.',he:'90% מכל Backend בעולם זה CRUD. אם אתה יודע INSERT, SELECT, UPDATE, DELETE — אתה יודע לבנות API.'}, example:'INSERT INTO predictions (user_id, game_id, pred_home)\nVALUES (auth.uid(), \'abc\', 2);'},
+    {id:'pk', name:'Primary Key (PK)', brief:{en:'Unique identifier for every row',he:'מזהה ייחודי לכל שורה'}, detail:{en:'Every table needs one. Usually a UUID or auto-incrementing integer. No two rows can have the same PK.',he:'כל טבלה צריכה אחד. בדרך כלל UUID או מספר עולה אוטומטית. אין שתי שורות עם אותו PK.'}, example:'id uuid PRIMARY KEY DEFAULT gen_random_uuid()'},
+    {id:'fk', name:'Foreign Key (FK)', brief:{en:'A field pointing to a row in another table',he:'שדה שמצביע לשורה בטבלה אחרת'}, detail:{en:'The "glue" between tables. A FK in predictions pointing to games ensures every prediction is linked to a real game. The DB enforces Referential Integrity — you can\'t point to a game that doesn\'t exist.',he:'ה"דבק" בין הטבלאות. FK ב-predictions שמצביע ל-games מבטיח שכל ניחוש מקושר למשחק אמיתי. ה-DB אוכף Referential Integrity — אי אפשר להצביע למשחק שלא קיים.'}, example:'game_id uuid REFERENCES games(id)'},
+    {id:'constraint', name:'Constraint', brief:{en:'A rule the DB enforces automatically',he:'כלל שה-DB אוכף אוטומטית'}, detail:{en:'Instead of checking in code "did this user already predict this game?" — the DB does it for you. Constraints include UNIQUE, NOT NULL, CHECK, and FK references.',he:'במקום לבדוק בקוד "האם המשתמש כבר ניחש את המשחק?" — ה-DB עושה את זה בשבילך. Constraints כוללים UNIQUE, NOT NULL, CHECK, ו-FK.'}, example:'UNIQUE(user_id, game_id)\n-- Can\'t predict same game twice'},
+    {id:'migration', name:'Migration', brief:{en:'A versioned file that changes an existing schema',he:'קובץ מתועד שמשנה Schema קיים'}, detail:{en:'When your app is live and you need to add a column — you can\'t just DROP and recreate. A migration is a file that says "change X" so every environment stays in sync. Not scary — just a SQL file with a timestamp.',he:'כשהאפליקציה באוויר וצריך להוסיף עמודה — אי אפשר סתם למחוק וליצור מחדש. Migration הוא קובץ שאומר "שנה X" כדי שכל סביבה תישאר מסונכרנת. לא מפחיד — פשוט קובץ SQL עם timestamp.'}, example:'-- 20260310_add_avatar.sql\nALTER TABLE users\n  ADD COLUMN avatar_url text;'},
+    {id:'erd', name:'ERD', brief:{en:'Entity Relationship Diagram — visual map of all tables',he:'תרשים ישויות וקשרים — מפה ויזואלית של כל הטבלאות'}, detail:{en:'A diagram showing all tables, their fields, and how they connect. The architectural blueprint before writing any code. Standard practice in the industry.',he:'תרשים שמציג את כל הטבלאות, השדות שלהן, ואיך הן מתחברות. התוכנית האדריכלית לפני כתיבת קוד. פרקטיקה סטנדרטית בתעשייה.'}, example:'users ||--o{ predictions : "makes"\ngames ||--o{ predictions : "receives"'}
+  ],
+  be: [
+    {id:'api', name:'API', brief:{en:'The "contract" between Frontend and Backend',he:'"חוזה" בין Frontend ל-Backend'}, detail:{en:'Application Programming Interface. Defines what you can ask for and what you\'ll get back. Like a restaurant menu — you can order item #5, but you can\'t walk into the kitchen.',he:'Application Programming Interface. מגדיר מה אפשר לבקש ומה מקבלים בחזרה. כמו תפריט מסעדה — אפשר להזמין פריט מס\' 5, אבל אי אפשר להיכנס למטבח.'}, example:'GET  /api/games         → list of games\nPOST /api/predictions   → save prediction'},
+    {id:'rest', name:'REST API', brief:{en:'API style where every URL represents a resource',he:'סגנון API שבו כל URL מייצג משאב'}, detail:{en:'The most common API pattern. Each URL is a "noun" (resource), and HTTP methods are "verbs": GET=read, POST=create, PUT=update, DELETE=delete.',he:'התבנית הנפוצה ביותר ל-API. כל URL הוא "שם עצם" (משאב), ושיטות HTTP הן "פעלים": GET=קריאה, POST=יצירה, PUT=עדכון, DELETE=מחיקה.'}, example:'GET    /games          → Read\nPOST   /predictions    → Create\nDELETE /predictions/5  → Delete'},
+    {id:'apilayer', name:'API Layer', brief:{en:'The code that handles HTTP requests and responses',he:'הקוד שמטפל בבקשות ותשובות HTTP'}, detail:{en:'In a traditional app, you\'d build this with Express.js (Node), FastAPI (Python), etc. Supabase gives you this automatically via its REST API.',he:'באפליקציה רגילה היית בונה את זה עם Express.js (Node), FastAPI (Python) וכו\'. Supabase נותן לך את זה אוטומטית דרך ה-REST API שלו.'}, example:'// Express.js (traditional)\napp.get("/games", async (req, res) => {\n  const games = await db.query("SELECT * FROM games");\n  res.json(games);\n});'},
+    {id:'middleware', name:'Middleware', brief:{en:'Code that runs "in the middle" — between request and response',he:'קוד שרץ "באמצע" — בין בקשה לתשובה'}, detail:{en:'Before your request reaches the actual handler, middleware can check auth, log the request, validate input, etc. Think of it as the bouncer at the restaurant door.',he:'לפני שהבקשה מגיעה ל-handler, middleware יכול לבדוק הרשאות, לתעד בקשות, לוולד input וכו\'. כמו הסדרן בכניסה למסעדה.'}, example:'// Middleware checks auth BEFORE handler\napp.use(checkAuth);\napp.get("/predictions", handler);'},
+    {id:'authn', name:'Authentication', brief:{en:'Who are you? (Identity)',he:'מי אתה? (זיהוי)'}, detail:{en:'The process of proving your identity. Login with email/password, Google OAuth, magic link, etc. Results in a JWT token that proves "I am user X".',he:'תהליך הוכחת הזהות שלך. התחברות עם אימייל/סיסמה, Google OAuth, magic link וכו\'. התוצאה היא JWT token שמוכיח "אני משתמש X".'}, example:'// Supabase Auth\nconst { data } = await supabase.auth\n  .signInWithPassword({\n    email, password\n  });'},
+    {id:'authz', name:'Authorization', brief:{en:'What are you allowed to do?',he:'מה מותר לך לעשות?'}, detail:{en:'After knowing WHO you are (Authentication), the system checks WHAT you can do. "Only the prediction owner can edit it." "Only group members can see the leaderboard."',he:'אחרי שיודעים מי אתה (Authentication), המערכת בודקת מה מותר לך. "רק בעל הניחוש יכול לערוך אותו." "רק חברי קבוצה יכולים לראות את הטבלה."'}, example:'// RLS Policy = Authorization at DB level\nCREATE POLICY "own predictions"\n  ON predictions FOR SELECT\n  USING (user_id = auth.uid());'},
+    {id:'rls', name:'RLS (Row Level Security)', brief:{en:'Authorization at the database level',he:'Authorization ברמת הדאטאבייס'}, detail:{en:'Instead of writing middleware to check permissions, Supabase lets you define rules directly on the database. Every query is automatically filtered. Replaces traditional middleware auth.',he:'במקום לכתוב middleware שבודק הרשאות, Supabase מאפשר להגדיר כללים ישירות על הדאטאבייס. כל שאילתה מסוננת אוטומטית. מחליף middleware מסורתי.'}, example:'-- Users see only their predictions\n-- before kickoff\nCREATE POLICY "hide_before_kick"\n  ON predictions FOR SELECT\n  USING (\n    user_id = auth.uid()\n    OR kick_off_time < now()\n  );'},
+    {id:'baas', name:'BaaS', brief:{en:'Backend as a Service — ready-made backend',he:'Backend as a Service — Backend מוכן'}, detail:{en:'Services like Supabase and Firebase that give you DB + Auth + API + Storage out of the box. You skip building the server entirely. Trade-off: less control, faster shipping.',he:'שירותים כמו Supabase ו-Firebase שנותנים DB + Auth + API + Storage מהקופסה. מדלגים על בניית שרת לגמרי. Trade-off: פחות שליטה, שילוח מהיר יותר.'}, example:'// Supabase = DB + Auth + API + RLS\n// All in one. No Express needed.'},
+    {id:'edge', name:'Edge Function', brief:{en:'Serverless backend code that runs in the cloud',he:'קוד Backend שרץ בענן ללא שרת'}, detail:{en:'Code that runs only when triggered (not a permanent server). Runs close to the user for speed. Perfect for scheduled jobs like syncing match results from an external API.',he:'קוד שרץ רק כשמפעילים אותו (לא שרת קבוע). רץ קרוב למשתמש למהירות. מושלם למשימות מתוזמנות כמו סנכרון תוצאות מ-API חיצוני.'}, example:'// Supabase Edge Function\nexport default async function syncResults() {\n  const results = await fetch(API_FOOTBALL);\n  await supabase.from("games").upsert(results);\n}'}
+  ],
+  fe: [
+    {id:'client', name:'Client-side', brief:{en:'Code that runs in the user\'s browser',he:'קוד שרץ בדפדפן של המשתמש'}, detail:{en:'JavaScript, HTML, CSS — everything the browser downloads and executes. The user can inspect it (DevTools). Never put secrets here.',he:'JavaScript, HTML, CSS — כל מה שהדפדפן מוריד ומריץ. המשתמש יכול לראות את זה (DevTools). לעולם אל תשים סודות פה.'}, example:'// This runs in the browser\ndocument.getElementById("btn")\n  .addEventListener("click", submitPrediction);'},
+    {id:'server', name:'Server-side', brief:{en:'Code/data on the server, invisible to the user',he:'קוד/נתונים בשרת, בלתי נראים למשתמש'}, detail:{en:'RLS policies, Edge Functions, environment variables, API keys — things the user should never see or access directly.',he:'RLS policies, Edge Functions, משתני סביבה, מפתחות API — דברים שהמשתמש לעולם לא אמור לראות.'}, example:'// .env (server-side only!)\nSUPABASE_SERVICE_KEY=eyJhbGci...\n// NEVER expose this to the client'},
+    {id:'sdk', name:'SDK', brief:{en:'Library that wraps an API for easy use',he:'ספרייה שעוטפת API לשימוש נוח'}, detail:{en:'Software Development Kit. Instead of manually crafting HTTP requests, the SDK gives you nice functions. Supabase SDK wraps their REST API so you write supabase.from("games").select() instead of raw fetch().',he:'Software Development Kit. במקום לבנות ידנית בקשות HTTP, ה-SDK נותן פונקציות נוחות. Supabase SDK עוטף את ה-REST API שלהם כך שתכתוב supabase.from("games").select() במקום fetch() גולמי.'}, example:'// SDK (clean)\nconst { data } = await supabase\n  .from("games").select();\n\n// Without SDK (manual)\nfetch("https://x.supabase.co/rest/v1/games",\n  { headers: { Authorization: "Bearer ..." }})'},
+    {id:'async', name:'Async/Await', brief:{en:'Pattern for "wait for the server to respond"',he:'תבנית ל"חכה שהשרת יענה"'}, detail:{en:'When you ask the server for data, it takes time (network). Async/Await lets you write code that "waits" without freezing the page. Every client-server communication uses this.',he:'כשמבקשים מהשרת נתונים, זה לוקח זמן (רשת). Async/Await מאפשר לכתוב קוד ש"מחכה" בלי להקפיא את הדף. כל תקשורת client-server משתמשת בזה.'}, example:'// Without async: callback hell\n// With async: reads like normal code\nconst { data } = await supabase\n  .from("predictions")\n  .select("*");'},
+    {id:'fetch', name:'Fetch', brief:{en:'The browser\'s built-in HTTP request function',he:'פונקציית ה-HTTP המובנית בדפדפן'}, detail:{en:'The raw way to make HTTP requests from the browser. SDKs wrap this for you. You rarely use it directly when you have an SDK, but it\'s the foundation underneath.',he:'הדרך הגולמית לשלוח בקשות HTTP מהדפדפן. SDKs עוטפים את זה בשבילך. כמעט ולא משתמשים ישירות כשיש SDK, אבל זה הבסיס מתחת.'}, example:'const res = await fetch("/api/games");\nconst games = await res.json();'},
+    {id:'state', name:'State', brief:{en:'The current status of the app in the browser',he:'המצב הנוכחי של האפליקציה בדפדפן'}, detail:{en:'"The user is logged in, viewing 3 predictions, the modal is open." State is what makes the UI dynamic. In vanilla JS you manage it manually; in React, you use useState/useReducer.',he:'"המשתמש מחובר, צופה ב-3 ניחושים, המודל פתוח." State הוא מה שהופך את ה-UI לדינמי. ב-vanilla JS מנהלים ידנית; ב-React משתמשים ב-useState/useReducer.'}, example:'// Vanilla JS state\nlet isLoggedIn = false;\nlet predictions = [];\nlet activeTab = "upcoming";'},
+    {id:'hardcoded', name:'Hardcoded', brief:{en:'Data written directly in code, not from a database',he:'נתונים כתובים ישירות בקוד, לא מ-DB'}, detail:{en:'Fine for prototypes and static content. Bad when data needs to change or come from users. The transition from hardcoded to DB-backed is a key moment in every project.',he:'בסדר לפרוטוטייפים ותוכן סטטי. רע כשנתונים צריכים להשתנות או להגיע ממשתמשים. המעבר מ-hardcoded ל-DB הוא רגע מפתח בכל פרויקט.'}, example:'// Hardcoded (bad for dynamic data)\nconst teams = [{name:"Brazil",rank:1}];\n\n// DB-backed (good)\nconst { data: teams } = await supabase\n  .from("teams").select();'},
+    {id:'spa', name:'SPA / SSR', brief:{en:'Single Page App vs Server-Side Rendering',he:'אפליקציה חד-עמודית מול רינדור בצד שרת'}, detail:{en:'SPA (React, Vue): loads once, updates dynamically. Fast interactions, but slow initial load and bad SEO. SSR (Next.js): server renders HTML first, then JS takes over. Best of both worlds.',he:'SPA (React, Vue): נטען פעם אחת, מתעדכן דינמית. אינטראקציות מהירות, אבל טעינה ראשונית איטית ו-SEO גרוע. SSR (Next.js): השרת מרנדר HTML קודם, ואז JS משתלט. הטוב משני העולמות.'}, example:'// SPA: React\n// SSR: Next.js\n// Static: Plain HTML (what Itay has now)'}
+  ]
+};
+
+/* --- FLOW STEPS --- */
+const flowSteps = {
+  request: [
+    {label:{en:'User clicks "Submit Prediction"',he:'המשתמש לוחץ "שלח ניחוש"'}, layer:'Frontend', concept:{en:'Client-side Event',he:'Client-side Event'}, code:'document.getElementById("submitBtn")\n  .addEventListener("click", async () => {\n    // prediction flow starts here\n  });', info:{en:'Everything starts with a user action in the browser. This is <strong>Client-side</strong> JavaScript — it runs on the user\'s machine, not the server.',he:'הכל מתחיל מפעולה של המשתמש בדפדפן. זה JavaScript <strong>Client-side</strong> — רץ על המחשב של המשתמש, לא על השרת.'}},
+    {label:{en:'SDK sends request to Supabase',he:'SDK שולח בקשה ל-Supabase'}, layer:'SDK / API', concept:{en:'SDK wraps REST API',he:'SDK עוטף REST API'}, code:'const { data, error } = await supabase\n  .from("predictions")\n  .insert({\n    game_id: "abc-123",\n    pred_home: 2,\n    pred_away: 1\n  });', info:{en:'The <strong>SDK</strong> translates your JS call into an HTTP <strong>POST</strong> request to the Supabase <strong>REST API</strong>. Under the hood: <code>POST /rest/v1/predictions</code> with a JWT token in the header.',he:'ה-<strong>SDK</strong> מתרגם את קריאת ה-JS לבקשת HTTP <strong>POST</strong> ל-<strong>REST API</strong> של Supabase. מאחורי הקלעים: <code>POST /rest/v1/predictions</code> עם JWT token ב-header.'}},
+    {label:{en:'RLS checks authorization',he:'RLS בודק הרשאות'}, layer:'Authorization', concept:{en:'RLS (Row Level Security)',he:'RLS (Row Level Security)'}, code:'-- Supabase checks this policy automatically:\nCREATE POLICY "users_insert_own"\n  ON predictions FOR INSERT\n  WITH CHECK (\n    auth.uid() = user_id\n  );', info:{en:'Before touching the database, <strong>RLS</strong> acts as <strong>Middleware</strong> — checking if this user is allowed to insert into predictions. This is <strong>Authorization</strong> at the DB level. No backend code needed.',he:'לפני שנוגעים בדאטאבייס, <strong>RLS</strong> פועל כ-<strong>Middleware</strong> — בודק אם למשתמש הזה מותר לכתוב ל-predictions. זה <strong>Authorization</strong> ברמת ה-DB. בלי קוד Backend.'}},
+    {label:{en:'Database executes INSERT',he:'הדאטאבייס מבצע INSERT'}, layer:'Database', concept:{en:'DML + Constraints',he:'DML + Constraints'}, code:'INSERT INTO predictions\n  (user_id, game_id, pred_home, pred_away)\nVALUES\n  (\'user-xyz\', \'abc-123\', 2, 1);\n\n-- UNIQUE(user_id, game_id) enforced!\n-- FK to games(id) enforced!', info:{en:'The <strong>DML</strong> command runs. The DB checks <strong>Constraints</strong>: UNIQUE(user_id, game_id) ensures no double predictions. <strong>Foreign Key</strong> ensures the game exists. If any check fails, the whole operation is rejected.',he:'פקודת <strong>DML</strong> רצה. ה-DB בודק <strong>Constraints</strong>: UNIQUE(user_id, game_id) מבטיח שאין ניחוש כפול. <strong>Foreign Key</strong> מבטיח שהמשחק קיים. אם בדיקה כלשהי נכשלת, כל הפעולה נדחית.'}}
+  ],
+  response: [
+    {label:{en:'Database returns the new row',he:'הדאטאבייס מחזיר את השורה החדשה'}, layer:'Database', concept:{en:'RETURNING clause',he:'RETURNING clause'}, code:'-- PostgreSQL returns the created row:\n{\n  "id": "pred-789",\n  "user_id": "user-xyz",\n  "game_id": "abc-123",\n  "pred_home": 2,\n  "pred_away": 1,\n  "submitted_at": "2026-03-10T15:30:00Z"\n}', info:{en:'PostgreSQL can return the newly created row immediately. No need for a second query. The response travels back through the same layers.',he:'PostgreSQL יכול להחזיר את השורה שנוצרה מיד. בלי צורך בשאילתה נוספת. התשובה חוזרת דרך אותן שכבות.'}},
+    {label:{en:'API sends JSON response',he:'API שולח תשובת JSON'}, layer:'SDK / API', concept:{en:'REST Response',he:'REST Response'}, code:'// HTTP 201 Created\n// Content-Type: application/json\n{\n  "data": [{ ...prediction }],\n  "error": null\n}', info:{en:'The <strong>REST API</strong> wraps the DB response in a standard JSON format with <code>data</code> and <code>error</code> fields. HTTP status 201 means "Created successfully".',he:'ה-<strong>REST API</strong> עוטף את תשובת ה-DB בפורמט JSON סטנדרטי עם שדות <code>data</code> ו-<code>error</code>. סטטוס HTTP 201 אומר "נוצר בהצלחה".'}},
+    {label:{en:'Frontend updates the UI',he:'ה-Frontend מעדכן את ה-UI'}, layer:'Frontend', concept:{en:'State Update + Render',he:'עדכון State + רינדור'}, code:'if (!error) {\n  predictions.push(data[0]);\n  renderPredictions();\n  showToast("Prediction saved!");\n}\n// State changed → UI re-renders', info:{en:'The <strong>Async/Await</strong> resolves. The app updates its <strong>State</strong> (adds the new prediction to the local array) and re-renders the UI. The user sees "Prediction saved!" — full circle.',he:'ה-<strong>Async/Await</strong> מסתיים. האפליקציה מעדכנת את ה-<strong>State</strong> (מוסיפה את הניחוש למערך המקומי) ומרנדרת מחדש את ה-UI. המשתמש רואה "הניחוש נשמר!" — מעגל שלם.'}}
+  ]
+};
+
+/* --- AI PROMPTS DATA --- */
+const prompts = [
+  {want:{en:'Plan a database from scratch',he:'לתכנן DB מאפס'}, say:'Design an <span class="kw">ERD</span> for my app with these entities...', raw:'Design an ERD for my app with these entities...'},
+  {want:{en:'Create tables',he:'ליצור טבלאות'}, say:'Write <span class="kw">DDL</span> to create these tables in <span class="kw">Supabase/PostgreSQL</span>', raw:'Write DDL to create these tables in Supabase/PostgreSQL'},
+  {want:{en:'Change an existing table',he:'לשנות טבלה קיימת'}, say:'Create a <span class="kw">migration</span> to add column X to table Y', raw:'Create a migration to add column X to table Y'},
+  {want:{en:'Restrict data access',he:'להגביל גישה לנתונים'}, say:'Set up <span class="kw">RLS policies</span> so users can only read their own data', raw:'Set up RLS policies so users can only read their own data'},
+  {want:{en:'Connect Frontend to DB',he:'לחבר Frontend ל-DB'}, say:'Use the <span class="kw">Supabase SDK</span> to <span class="kw">fetch</span> data and display it', raw:'Use the Supabase SDK to fetch data and display it'},
+  {want:{en:'Build a server',he:'לבנות שרת'}, say:'Create a <span class="kw">REST API</span> with Express/<span class="kw">FastAPI</span> with <span class="kw">CRUD</span> endpoints', raw:'Create a REST API with Express/FastAPI with CRUD endpoints'},
+  {want:{en:'Check permissions',he:'לבדוק הרשאות'}, say:'Add <span class="kw">middleware</span> for <span class="kw">authorization</span> — check JWT token', raw:'Add middleware for authorization — check JWT token'},
+  {want:{en:'Work with data',he:'לעבוד עם נתונים'}, say:'<span class="kw">INSERT</span> a new prediction, then <span class="kw">SELECT</span> all predictions for this user', raw:'INSERT a new prediction, then SELECT all predictions for this user'}
+];
+
+/* --- TAKEAWAYS DATA --- */
+const takeaways = [
+  {icon:'🔄', text:{en:'Every app is <strong>Frontend → API → Database</strong>, and back. Always. No exceptions.',he:'כל אפליקציה זה <strong>Frontend → API → Database</strong>, ובחזרה. תמיד. בלי יוצאים מן הכלל.'}},
+  {icon:'📝', text:{en:'<strong>CRUD</strong> is 90% of every backend. If you know INSERT/SELECT/UPDATE/DELETE, you know how to build an API.',he:'<strong>CRUD</strong> זה 90% מכל Backend. אם אתה יודע INSERT/SELECT/UPDATE/DELETE, אתה יודע לבנות API.'}},
+  {icon:'📦', text:{en:'<strong>Supabase = DB + Auth + API + RLS</strong> in one package. Without it, you\'d build each layer separately.',he:'<strong>Supabase = DB + Auth + API + RLS</strong> בחבילה אחת. בלעדיו, היית בונה כל שכבה בנפרד.'}},
+  {icon:'📁', text:{en:'<strong>Migration</strong> is just a file that says "change X in the schema." Every serious project uses them.',he:'<strong>Migration</strong> זה רק קובץ שאומר "שנה X ב-Schema." כל פרויקט רציני משתמש בזה.'}},
+  {icon:'🗣️', text:{en:'<strong>Words matter more than code.</strong> Saying "I need an RLS policy" instead of "I need something that checks permissions" gets you 10x better AI answers.',he:'<strong>המילים חשובות יותר מהקוד.</strong> להגיד "I need an RLS policy" במקום "I need something that checks permissions" מקבל תשובות טובות פי 10 מ-AI.'}}
+];
+
+/* ========== RENDER FUNCTIONS ========== */
+let currentLang = 'en';
+let currentLayer = 'db';
+let flowIdx = 0;
+let flowPhase = 'request'; // 'request' | 'response' | 'done'
+let flowAutoInterval = null;
+
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-he').classList.toggle('active', lang === 'he');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (T[lang][key]) el.innerHTML = T[lang][key];
+  });
+  renderConcepts();
+  renderPrompts();
+  renderTakeaways();
+  renderFlowNodes();
+  updateFlowInfo();
+}
+
+function showLayer(layer) {
+  currentLayer = layer;
+  document.querySelectorAll('.layer-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderConcepts();
+}
+
+function renderConcepts() {
+  const grid = document.getElementById('conceptGrid');
+  const items = concepts[currentLayer];
+  grid.innerHTML = items.map(c => `
+    <div class="concept-card" onclick="toggleConcept(this)">
+      <div class="concept-name">${c.name}</div>
+      <div class="concept-brief">${c.brief[currentLang]}</div>
+      <div class="concept-detail">
+        <p style="color:var(--text2);font-size:.9rem;margin-bottom:.5rem">${c.detail[currentLang]}</p>
+        <div class="concept-example">${escHtml(c.example)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleConcept(el) {
+  const wasExpanded = el.classList.contains('expanded');
+  document.querySelectorAll('.concept-card').forEach(c => c.classList.remove('expanded'));
+  if (!wasExpanded) el.classList.add('expanded');
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* --- FLOW --- */
+function getFlowSteps() {
+  if (flowPhase === 'request') return flowSteps.request;
+  if (flowPhase === 'response') return flowSteps.response;
+  return [];
+}
+
+function renderFlowNodes() {
+  const track = document.getElementById('flowTrack');
+  const reqSteps = flowSteps.request;
+  const resSteps = flowSteps.response;
+  let html = '';
+
+  // Request nodes
+  reqSteps.forEach((s, i) => {
+    const cls = flowPhase === 'request' && i < flowIdx ? 'done' : (flowPhase === 'request' && i === flowIdx - 0 ? '' : '');
+    const isActive = flowPhase === 'request' && i === flowIdx;
+    const isDone = (flowPhase === 'request' && i < flowIdx) || flowPhase === 'response' || flowPhase === 'done';
+    html += `<div class="flow-node${isActive ? ' active' : ''}${isDone && !isActive ? ' done' : ''}" id="req-${i}">
+      <div class="flow-node-label" style="color:${isActive ? 'var(--purple)' : isDone ? 'var(--green)' : 'var(--muted)'}">
+        ${s.label[currentLang]}</div>
+      <div class="flow-node-concept">${s.concept[currentLang]} &bull; ${s.layer}</div>
+      ${isActive ? `<div class="flow-node-code">${escHtml(s.code)}</div>` : ''}
+    </div>`;
+    if (i < reqSteps.length - 1) {
+      const arrowDone = (flowPhase === 'request' && i < flowIdx - 1) || flowPhase === 'response' || flowPhase === 'done';
+      const arrowActive = flowPhase === 'request' && i === flowIdx - 1;
+      html += `<div class="flow-arrow${arrowActive ? ' active' : ''}${arrowDone ? ' done' : ''}"></div>`;
+    }
+  });
+
+  // Separator
+  if (flowPhase === 'response' || flowPhase === 'done') {
+    html += `<div style="width:60%;height:2px;background:var(--green);margin:1rem 0;border-radius:1px"></div>`;
+  } else {
+    html += `<div style="width:60%;height:2px;background:var(--border);margin:1rem 0;border-radius:1px"></div>`;
+  }
+
+  // Response nodes
+  resSteps.forEach((s, i) => {
+    const isActive = flowPhase === 'response' && i === flowIdx;
+    const isDone = (flowPhase === 'response' && i < flowIdx) || flowPhase === 'done';
+    html += `<div class="flow-node${isActive ? ' active' : ''}${isDone && !isActive ? ' done' : ''}" id="res-${i}">
+      <div class="flow-node-label" style="color:${isActive ? 'var(--green)' : isDone ? 'var(--green)' : 'var(--muted)'}">
+        ${s.label[currentLang]}</div>
+      <div class="flow-node-concept">${s.concept[currentLang]} &bull; ${s.layer}</div>
+      ${isActive ? `<div class="flow-node-code">${escHtml(s.code)}</div>` : ''}
+    </div>`;
+    if (i < resSteps.length - 1) {
+      const arrowDone = (flowPhase === 'response' && i < flowIdx - 1) || flowPhase === 'done';
+      const arrowActive = flowPhase === 'response' && i === flowIdx - 1;
+      html += `<div class="flow-arrow${arrowActive ? ' active' : ''}${arrowDone ? ' done' : ''}"></div>`;
+    }
+  });
+
+  track.innerHTML = html;
+
+  // Update direction label
+  const dir = document.getElementById('flowDirection');
+  if (flowPhase === 'request') { dir.innerHTML = T[currentLang].flow_dir_req; dir.className = 'flow-direction'; }
+  else if (flowPhase === 'response') { dir.innerHTML = T[currentLang].flow_dir_res; dir.className = 'flow-direction return-mode'; }
+  else { dir.innerHTML = T[currentLang].flow_dir_done; dir.className = 'flow-direction return-mode'; }
+}
+
+function updateFlowInfo() {
+  const titleEl = document.getElementById('flowInfoTitle');
+  const textEl = document.getElementById('flowInfoText');
+
+  if (flowPhase === 'done') {
+    titleEl.textContent = currentLang === 'en' ? 'Round Trip Complete!' : '!הלוך-חזור שלם';
+    textEl.innerHTML = currentLang === 'en'
+      ? 'The prediction traveled: <strong>Browser → SDK → API → RLS → DB → API → SDK → Browser</strong>. This is how every full-stack operation works.'
+      : 'הניחוש נסע: <strong>Browser → SDK → API → RLS → DB → API → SDK → Browser</strong>. ככה כל פעולת Full-Stack עובדת.';
+    return;
+  }
+
+  const steps = flowPhase === 'request' ? flowSteps.request : flowSteps.response;
+  if (flowIdx < steps.length) {
+    const s = steps[flowIdx];
+    titleEl.textContent = `${s.concept[currentLang]} — ${s.layer}`;
+    textEl.innerHTML = s.info[currentLang];
+  } else {
+    titleEl.innerHTML = T[currentLang].flow_hint_title;
+    textEl.innerHTML = T[currentLang].flow_hint_text;
+  }
+}
+
+function flowStep() {
+  if (flowPhase === 'done') return;
+
+  const steps = flowPhase === 'request' ? flowSteps.request : flowSteps.response;
+
+  if (flowIdx < steps.length) {
+    flowIdx++;
+    if (flowIdx >= steps.length) {
+      if (flowPhase === 'request') {
+        // Switch to response
+        flowPhase = 'response';
+        flowIdx = 0;
+      } else {
+        flowPhase = 'done';
+      }
+    }
+  }
+
+  renderFlowNodes();
+  updateFlowInfo();
+}
+
+function flowAuto() {
+  if (flowAutoInterval || flowPhase === 'done') return;
+  flowAutoInterval = setInterval(() => {
+    if (flowPhase === 'done') { clearInterval(flowAutoInterval); flowAutoInterval = null; return; }
+    flowStep();
+  }, 1400);
+}
+
+function flowReset() {
+  if (flowAutoInterval) { clearInterval(flowAutoInterval); flowAutoInterval = null; }
+  flowIdx = 0;
+  flowPhase = 'request';
+  renderFlowNodes();
+  updateFlowInfo();
+}
+
+/* --- PROMPTS --- */
+function renderPrompts() {
+  const grid = document.getElementById('promptGrid');
+  grid.innerHTML = prompts.map((p, i) => `
+    <div class="prompt-card" onclick="copyPrompt(${i}, this)">
+      <div class="prompt-want">${p.want[currentLang]}</div>
+      <div class="prompt-say">${p.say}</div>
+    </div>
+  `).join('');
+}
+
+function copyPrompt(i, el) {
+  navigator.clipboard.writeText(prompts[i].raw).then(() => {
+    const w = el.querySelector('.prompt-want');
+    const orig = w.textContent;
+    w.textContent = T[currentLang].copied;
+    w.style.color = 'var(--green)';
+    setTimeout(() => { w.textContent = orig; w.style.color = ''; }, 1200);
+  });
+}
+
+/* --- TAKEAWAYS --- */
+function renderTakeaways() {
+  const el = document.getElementById('takeaways');
+  el.innerHTML = takeaways.map(t => `
+    <div class="takeaway">
+      <div class="takeaway-icon">${t.icon}</div>
+      <div class="takeaway-text">${t.text[currentLang]}</div>
+    </div>
+  `).join('');
+}
+
+/* --- INIT --- */
+renderConcepts();
+renderPrompts();
+renderTakeaways();
+renderFlowNodes();
+updateFlowInfo();
+</script>
+</body>
+</html>
