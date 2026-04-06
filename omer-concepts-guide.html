@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מדריך מושגים — עומר | Smart Shield</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --border: #334155;
+  --purple-1: #818cf8;
+  --purple-2: #c084fc;
+  --pink: #f472b6;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --green: #34d399;
+  --yellow: #fbbf24;
+  --red: #f87171;
+  --radius: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.7;
+  padding: 0 16px 60px;
+}
+.lang-toggle {
+  position: fixed; top: 16px; right: 16px; z-index: 100;
+  display: flex; gap: 4px; background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 4px;
+}
+[dir="ltr"] .lang-toggle { right: auto; left: 16px; }
+.lang-btn {
+  background: transparent; color: var(--text-dim); border: none;
+  padding: 6px 14px; border-radius: 6px; cursor: pointer;
+  font-weight: 600; font-size: 14px; transition: all .2s;
+}
+.lang-btn.active {
+  background: linear-gradient(135deg, var(--purple-1), var(--purple-2));
+  color: #fff;
+}
+.hero {
+  max-width: 800px; margin: 60px auto 40px; text-align: center;
+}
+.hero h1 {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  background: linear-gradient(135deg, var(--purple-1), var(--purple-2), var(--pink));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin-bottom: 12px;
+}
+.hero p { color: var(--text-dim); font-size: 1.05rem; }
+.container { max-width: 800px; margin: 0 auto; }
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 16px;
+  overflow: hidden; transition: border-color .3s;
+}
+.card:hover { border-color: var(--purple-1); }
+.card-header {
+  padding: 18px 24px; cursor: pointer; display: flex;
+  align-items: center; justify-content: space-between;
+  user-select: none;
+}
+.card-header h2 {
+  font-size: 1.15rem; display: flex; align-items: center; gap: 10px;
+}
+.card-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px; font-size: .85rem;
+  background: linear-gradient(135deg, var(--purple-1), var(--purple-2));
+  color: #fff; flex-shrink: 0;
+}
+.chevron {
+  transition: transform .3s; font-size: 1.2rem; color: var(--text-dim);
+}
+.card.open .chevron { transform: rotate(180deg); }
+[dir="rtl"] .chevron { transform: rotate(0deg); }
+[dir="rtl"] .card.open .chevron { transform: rotate(180deg); }
+.card-body {
+  max-height: 0; overflow: hidden; transition: max-height .4s ease;
+}
+.card.open .card-body { max-height: 5000px; }
+.card-content { padding: 0 24px 24px; }
+.card-content h3 { color: var(--purple-2); margin: 20px 0 8px; font-size: 1.05rem; }
+.card-content h4 { color: var(--pink); margin: 16px 0 6px; font-size: .95rem; }
+.card-content p, .card-content li { color: var(--text); font-size: .95rem; }
+.card-content ul, .card-content ol { padding-inline-start: 24px; margin: 8px 0; }
+.card-content li { margin-bottom: 4px; }
+.card-content code {
+  background: #0f172a; padding: 2px 7px; border-radius: 4px;
+  font-size: .88rem; color: var(--purple-1);
+}
+.callout {
+  background: rgba(129,140,248,.1); border-inline-start: 3px solid var(--purple-1);
+  padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0;
+  font-size: .93rem;
+}
+[dir="rtl"] .callout { border-radius: 8px 0 0 8px; }
+
+/* Interactive elements */
+.interactive {
+  background: rgba(192,132,252,.08); border: 1px solid rgba(192,132,252,.2);
+  border-radius: var(--radius); padding: 20px; margin: 16px 0;
+}
+.interactive-label {
+  font-size: .8rem; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--purple-2); margin-bottom: 12px; font-weight: 600;
+}
+
+/* VIF slider */
+.slider-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.slider-row input[type="range"] { flex: 1; min-width: 180px; accent-color: var(--purple-1); }
+.vif-display {
+  display: flex; gap: 24px; margin: 16px 0; flex-wrap: wrap;
+}
+.vif-box {
+  background: var(--bg); border-radius: 8px; padding: 12px 20px;
+  text-align: center; min-width: 100px;
+}
+.vif-box .label { font-size: .8rem; color: var(--text-dim); }
+.vif-box .value { font-size: 1.6rem; font-weight: 700; }
+.vif-bar-track {
+  height: 12px; background: var(--bg); border-radius: 6px;
+  overflow: hidden; margin-top: 8px;
+}
+.vif-bar-fill {
+  height: 100%; border-radius: 6px; transition: width .3s, background .3s;
+}
+
+/* Tables */
+.data-table {
+  width: 100%; border-collapse: collapse; margin: 12px 0;
+  font-size: .9rem;
+}
+.data-table th {
+  background: var(--bg); padding: 8px 12px; text-align: start;
+  border-bottom: 2px solid var(--border); color: var(--purple-2);
+}
+.data-table td {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+}
+
+/* Step buttons */
+.step-nav {
+  display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap;
+}
+.step-btn {
+  padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: .85rem; transition: all .2s;
+}
+.step-btn.active {
+  background: linear-gradient(135deg, var(--purple-1), var(--purple-2));
+  border-color: transparent; color: #fff;
+}
+.step-content { margin: 12px 0; min-height: 80px; }
+
+/* Toggle buttons */
+.toggle-group { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+.toggle-btn {
+  padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--text); cursor: pointer;
+  font-size: .9rem; transition: all .2s;
+}
+.toggle-btn.active {
+  background: linear-gradient(135deg, var(--purple-1), var(--purple-2));
+  border-color: transparent; color: #fff;
+}
+
+/* FE mini dataset */
+.mini-dataset {
+  display: grid; gap: 4px; font-size: .85rem; font-family: monospace;
+}
+.mini-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 4px;
+}
+.mini-cell {
+  background: var(--bg); padding: 6px 10px; border-radius: 4px;
+  text-align: center;
+}
+.mini-cell.header { color: var(--purple-2); font-weight: 600; }
+
+/* QLoRA visual */
+.qlora-visual {
+  display: flex; gap: 16px; margin: 16px 0; align-items: flex-end; flex-wrap: wrap;
+}
+.qlora-bar {
+  flex: 1; min-width: 100px; border-radius: 8px 8px 0 0;
+  text-align: center; padding: 12px 8px; transition: all .4s;
+  font-size: .85rem; position: relative;
+}
+.qlora-bar .bar-label { font-weight: 600; margin-bottom: 4px; }
+.qlora-bar .bar-size { font-size: .8rem; color: var(--text-dim); }
+
+/* RAG pipeline */
+.rag-step {
+  display: flex; align-items: center; gap: 12px; padding: 10px;
+  background: var(--bg); border-radius: 8px; margin: 6px 0;
+  opacity: 0.3; transition: all .3s;
+}
+.rag-step.active { opacity: 1; border-inline-start: 3px solid var(--purple-1); }
+.rag-icon { font-size: 1.3rem; width: 36px; text-align: center; }
+.rag-text { flex: 1; font-size: .9rem; }
+
+/* Compare boxes */
+.compare-row { display: flex; gap: 16px; margin: 12px 0; flex-wrap: wrap; }
+.compare-box {
+  flex: 1; min-width: 240px; background: var(--bg); border-radius: 8px;
+  padding: 16px; border: 1px solid var(--border);
+}
+.compare-box h4 { margin-top: 0; }
+
+@media (max-width: 600px) {
+  .card-header { padding: 14px 16px; }
+  .card-content { padding: 0 16px 16px; }
+  .interactive { padding: 14px; }
+  .vif-display { gap: 12px; }
+  .qlora-visual { flex-direction: column; align-items: stretch; }
+}
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+  <button class="lang-btn active" id="btn-he" onclick="setLang('he')">HE</button>
+</div>
+
+<div class="hero">
+  <h1 data-i18n="title">מדריך מושגים — עומר | Smart Shield</h1>
+  <p data-i18n="subtitle">מדריך עצמאי ואינטראקטיבי למושגי Data Science ו-Machine Learning. לחץ על כל נושא כדי לפתוח.</p>
+</div>
+
+<div class="container">
+
+<!-- ===== SECTION 1: VIF ===== -->
+<div class="card open" id="card-1">
+  <div class="card-header" onclick="toggleCard('card-1')">
+    <h2><span class="card-num">1</span> <span data-i18n="s1_title">VIF — Variance Inflation Factor</span></h2>
+    <span class="chevron">&#9662;</span>
+  </div>
+  <div class="card-body"><div class="card-content">
+
+    <h3 data-i18n="s1_diff_title">ההבדל בין Correlation ל-VIF</h3>
+    <ul>
+      <li data-i18n="s1_corr"><strong>Correlation</strong> = בודק קשר בין 2 פיצ'רים (זוגות)</li>
+      <li data-i18n="s1_vif"><strong>VIF</strong> = בודק כמה טוב <em>כל</em> הפיצ'רים ביחד יכולים לחזות פיצ'ר אחד</li>
+    </ul>
+
+    <h3 data-i18n="s1_how_title">איך VIF עובד (מכנית)</h3>
+    <ol>
+      <li data-i18n="s1_step1">קח פיצ'ר X₁</li>
+      <li data-i18n="s1_step2">נסה לחזות X₁ מכל השאר (Linear Regression: X₁ ~ X₂ + X₃ + ... + Xₙ)</li>
+      <li data-i18n="s1_step3">קבל R² של הרגרסיה</li>
+      <li data-i18n="s1_step4">VIF = 1 / (1 - R²)</li>
+    </ol>
+
+    <div class="interactive">
+      <div class="interactive-label" data-i18n="s1_interactive_label">אינטראקטיבי — משחק עם R²</div>
+      <div class="slider-row">
+        <span data-i18n="s1_r2_label">R² =</span>
+        <input type="range" id="vif-slider" min="0" max="99" value="50" oninput="updateVIF()">
+        <strong id="vif-r2-val">0.50</strong>
+      </div>
+      <div class="vif-display">
+        <div class="vif-box">
+          <div class="label">R²</div>
+          <div class="value" id="vif-r2-box">0.50</div>
+        </div>
+        <div class="vif-box">
+          <div class="label">VIF</div>
+          <div class="value" id="vif-val-box" style="color:var(--yellow)">2.00</div>
+        </div>
+        <div class="vif-box" style="flex:1; min-width: 160px;">
+          <div class="label" data-i18n="s1_danger">רמת סכנה</div>
+          <div class="vif-bar-track"><div class="vif-bar-fill" id="vif-bar" style="width:20%;background:var(--yellow)"></div></div>
+          <div class="value" id="vif-status" style="font-size:.9rem;margin-top:4px;color:var(--yellow)" data-i18n="s1_ok">OK</div>
+        </div>
+      </div>
+    </div>
+
+    <h4 data-i18n="s1_ref_title">טבלת ייחוס</h4>
+    <table class="data-table">
+      <tr><th>R²</th><th>VIF</th><th data-i18n="s1_th_meaning">משמעות</th></tr>
+      <tr><td>0</td><td>1</td><td data-i18n="s1_clean">נקי</td></tr>
+      <tr><td>0.5</td><td>2</td><td data-i18n="s1_fine">OK</td></tr>
+      <tr><td>0.9</td><td>10</td><td data-i18n="s1_thresh">סף — שקול להסיר!</td></tr>
+      <tr><td>0.99</td><td>100</td><td data-i18n="s1_remove">הסר!</td></tr>
+    </table>
+
+    <h3 data-i18n="s1_miss_title">למה VIF תופס מה שCorrelation מפספס</h3>
+    <p data-i18n="s1_miss_body">דוגמה: ל-A יש correlation מתון עם B (0.4) ו-correlation מתון עם C (0.3). <strong>אבל</strong> A = B + C בדיוק. Correlation בודק רק זוגות — הוא לא רואה את השילוב. VIF מריץ רגרסיה של A על <em>כל</em> השאר ביחד, מקבל R²=1 — ולכן VIF = ∞.</p>
+
+    <div class="callout" data-i18n="s1_omer">🔗 <strong>הקשר לפרויקט שלך:</strong> מצאת r=1.0 בין <code>game_concentration</code> ל-<code>top_game_bet_ratio</code>. VIF היה תופס את זה — ועוד מקרים שcorrelation מפספס.</div>
+
+  </div></div>
+</div>
+
+<!-- ===== SECTION 2: Feature Engineering ===== -->
+<div class="card" id="card-2">
+  <div class="card-header" onclick="toggleCard('card-2')">
+    <h2><span class="card-num">2</span> <span data-i18n="s2_title">Feature Engineering Patterns</span></h2>
+    <span class="chevron">&#9662;</span>
+  </div>
+  <div class="card-body"><div class="card-content">
+
+    <h3 data-i18n="s2_int_title">Interactions (A × B)</h3>
+    <ul>
+      <li data-i18n="s2_int1">מכפילים שני פיצ'רים — תופסים קשר שאף אחד לבד לא מראה</li>
+      <li data-i18n="s2_int2">דוגמה: <code>game_concentration_x_ngr</code> (שהסרת ב-Ablation!)</li>
+      <li data-i18n="s2_int3">מתי: כשהשילוב חשוב יותר מכל פיצ'ר בנפרד</li>
+    </ul>
+
+    <h3 data-i18n="s2_rat_title">Ratios (A / B)</h3>
+    <ul>
+      <li data-i18n="s2_rat1">מחלקים — מנרמלים ומראים יחס</li>
+      <li data-i18n="s2_rat2">דוגמאות: <code>lobby_pack_ratio</code>, <code>bonus_to_bet_ratio</code></li>
+      <li data-i18n="s2_rat3">מתי: כשהיחס חשוב, לא הערכים המוחלטים</li>
+    </ul>
+
+    <h3 data-i18n="s2_bin_title">Binning (רציף &rarr; קטגוריאלי)</h3>
+    <ul>
+      <li data-i18n="s2_bin1">חותכים לקבוצות</li>
+      <li data-i18n="s2_bin2">דוגמה: <code>financial_exposure</code> tiers</li>
+      <li data-i18n="s2_bin3">מתי: כשיש ספי החלטה טבעיים</li>
+    </ul>
+
+    <div class="interactive">
+      <div class="interactive-label" data-i18n="s2_inter_label">אינטראקטיבי — טרנספורמציית פיצ'רים</div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" onclick="setFEView('raw',this)" data-i18n="s2_raw">Raw</button>
+        <button class="toggle-btn" onclick="setFEView('interaction',this)" data-i18n="s2_interact">Interaction</button>
+        <button class="toggle-btn" onclick="setFEView('ratio',this)" data-i18n="s2_ratio">Ratio</button>
+        <button class="toggle-btn" onclick="setFEView('binned',this)" data-i18n="s2_binned">Binning</button>
+      </div>
+      <div id="fe-dataset"></div>
+    </div>
+
+  </div></div>
+</div>
+
+<!-- ===== SECTION 3: Stacking ===== -->
+<div class="card" id="card-3">
+  <div class="card-header" onclick="toggleCard('card-3')">
+    <h2><span class="card-num">3</span> <span data-i18n="s3_title">Stacking (Meta-Model)</span></h2>
+    <span class="chevron">&#9662;</span>
+  </div>
+  <div class="card-body"><div class="card-content">
+
+    <h3 data-i18n="s3_layers_title">שכבות</h3>
+    <ul>
+      <li data-i18n="s3_l0"><strong>Layer 0:</strong> 3 מודלים בסיסיים (LightGBM, Random Forest, LogReg) — כל אחד מייצר תחזית</li>
+      <li data-i18n="s3_oof"><strong>Out-of-Fold:</strong> למה אי אפשר פשוט לחזות על ה-training data? כי זה leakage! משתמשים ב-K-fold כדי לקבל תחזיות "כנות"</li>
+      <li data-i18n="s3_l1"><strong>Layer 1:</strong> Meta-learner (בדרך כלל LogReg פשוט) מקבל את תחזיות Layer 0 כ-input, לומד שילוב אופטימלי</li>
+    </ul>
+
+    <div class="interactive">
+      <div class="interactive-label" data-i18n="s3_inter_label">אינטראקטיבי — צעד אחר צעד</div>
+      <div class="step-nav" id="stack-steps">
+        <button class="step-btn active" onclick="setStackStep(1)"><span data-i18n="s3_step">שלב</span> 1</button>
+        <button class="step-btn" onclick="setStackStep(2)"><span data-i18n="s3_step">שלב</span> 2</button>
+        <button class="step-btn" onclick="setStackStep(3)"><span data-i18n="s3_step">שלב</span> 3</button>
+        <button class="step-btn" onclick="setStackStep(4)"><span data-i18n="s3_step">שלב</span> 4</button>
+        <button class="step-btn" onclick="setStackStep(5)"><span data-i18n="s3_step">שלב</span> 5</button>
+      </div>
+      <div class="step-content" id="stack-content"></div>
+    </div>
+
+    <div class="callout" data-i18n="s3_leakage">⚠️ <strong>למה לא להשתמש בתחזיות רגילות על training?</strong> המודל כבר "ראה" את הדוגמאות האלה. הוא יחזיר תוצאות טובות מדי, והMeta-model ילמד לסמוך עליו יותר מדי. בדאטה חדש — הכל יתפרק.</div>
+
+  </div></div>
+</div>
+
+<!-- ===== SECTION 4: Blending ===== -->
+<div class="card" id="card-4">
+  <div class="card-header" onclick="toggleCard('card-4')">
+    <h2><span class="card-num">4</span> <span data-i18n="s4_title">Blending</span></h2>
+    <span class="chevron">&#9662;</span>
+  </div>
+  <div class="card-body"><div class="card-content">
+
+    <h3 data-i18n="s4_diff_title">Stacking vs Blending</h3>
+    <table class="data-table">
+      <tr><th></th><th>Stacking</th><th>Blending</th></tr>
+      <tr>
+        <td data-i18n="s4_split">חלוקת דאטה</td>
+        <td data-i18n="s4_s_split">K-fold CV (כל הדאטה בשימוש)</td>
+        <td data-i18n="s4_b_split">Holdout פשוט (70/30)</td>
+      </tr>
+      <tr>
+        <td data-i18n="s4_complex">מורכבות</td>
+        <td data-i18n="s4_s_complex">גבוהה (לולאת CV)</td>
+        <td data-i18n="s4_b_complex">נמוכה (חלוקה אחת)</td>
+      </tr>
+      <tr>
+        <td data-i18n="s4_eff">יעילות דאטה</td>
+        <td data-i18n="s4_s_eff">טובה יותר (משתמש בכל הדאטה)</td>
+        <td data-i18n="s4_b_eff">מבזבז 30% על blending</td>
+      </tr>
+      <tr>
+        <td data-i18n="s4_impl">מימוש</td>
+        <td data-i18n="s4_s_impl">קשה יותר</td>
+        <td data-i18n="s4_b_impl">קל יותר</td>
+      </tr>
+    </table>
+
+    <h3 data-i18n="s4_when_title">מתי להשתמש בכל אחד?</h3>
+    <div class="compare-row">
+      <div class="compare-box">
+        <h4>Stacking</h4>
+        <ul>
+          <li data-i18n="s4_when_s1">דאטה קטן-בינוני (כל דוגמה חשובה)</li>
+          <li data-i18n="s4_when_s2">רוצים ביצועים מקסימליים</li>
+          <li data-i18n="s4_when_s3">תחרויות Kaggle</li>
+        </ul>
+      </div>
+      <div class="compare-box">
+        <h4>Blending</h4>
+        <ul>
+          <li data-i18n="s4_when_b1">דאטה גדול (30% הם עדיין הרבה)</li>
+          <li data-i18n="s4_when_b2">צריכים מהירות ופשטות</li>
+          <li data-i18n="s4_when_b3">Production systems</li>
+        </ul>
+      </div>
+    </div>
+
+  </div></div>
+</div>
+
+<!-- ===== SECTION 5: RAG Pipeline ===== -->
+<div class="card" id="card-5">
+  <div class="card-header" onclick="toggleCard('card-5')">
+    <h2><span class="card-num">5</span> <span data-i18n="s5_title">RAG Pipeline</span></h2>
+    <span class="chevron">&#9662;</span>
+  </div>
+  <div class="card-body"><div class="card-content">
+
+    <p data-i18n="s5_scenario">📄 <strong>תרחיש:</strong> יש לך 200 מסמכי policy של החברה. איך הChatbot שלך יענה על שאלות לגביהם?</p>
+
+    <div class="interactive">
+      <div class="interactive-label" data-i18n="s5_inter_label">אינטראקטיבי — Pipeline צעד אחר צעד</div>
+      <div class="step-nav" id="rag-steps">
+        <button class="step-btn active" onclick="setRAGStep(1)">1</button>
+        <button class="step-btn" onclick="setRAGStep(2)">2</button>
+        <button class="step-btn" onclick="setRAGStep(3)">3</button>
+        <button class="step-btn" onclick="setRAGStep(4)">4</button>
+        <button class="step-btn" onclick="setRAGStep(5)">5</button>
+        <button class="step-btn" onclick="setRAGStep(6)">6</button>
+      </div>
+
+      <div id="rag-pipeline">
+        <div class="rag-step active" id="rag-s1"><div class="rag-icon">&#9986;</div><div class="rag-text" data-i18n="s5_chunk"><strong>Chunk</strong> — שוברים מסמכים לחתיכות (200-500 מילים)</div></div>
+        <div class="rag-step" id="rag-s2"><div class="rag-icon">&#128300;</div><div class="rag-text" data-i18n="s5_embed"><strong>Embed</strong> — כל חתיכה הופכת לוקטור (מספרים)</div></div>
+        <div class="rag-step" id="rag-s3"><div class="rag-icon">&#128451;</div><div class="rag-text" data-i18n="s5_store"><strong>Store</strong> — שומרים ב-Vector DB (כמו Pinecone, Weaviate)</div></div>
+        <div class="rag-step" id="rag-s4"><div class="rag-icon">&#128269;</div><div class="rag-text" data-i18n="s5_query"><strong>Query</strong> — שאלת המשתמש הופכת לוקטור</div></div>
+        <div class="rag-step" id="rag-s5"><div class="rag-icon">&#127919;</div><div class="rag-text" data-i18n="s5_retrieve"><strong>Retrieve</strong> — מוצאים 3-5 חתיכות הכי דומות (cosine similarity)</div></div>
+        <div class="rag-step" id="rag-s6"><div class="rag-icon">&#9889;</div><div class="rag-text" data-i18n="s5_generate"><strong>Generate</strong> — מזריקים ל-prompt + LLM עונה עם מקורות</div></div>
+      </div>
+    </div>
+
+    <h3 data-i18n="s5_compare_title">עם RAG vs בלי RAG</h3>
+    <div class="toggle-group">
+      <button class="toggle-btn" onclick="setRAGCompare('without',this)" data-i18n="s5_without">בלי RAG</button>
+      <button class="toggle-btn active" onclick="setRAGCompare('with',this)" data-i18n="s5_with">עם RAG</button>
+    </div>
+    <div id="rag-compare" class="callout"></div>
+
+  </div></div>
+</div>
+
+<!-- ===== SECTION 6: QLoRA ===== -->
+<div class="card" id="card-6">
+  <div class="card-header" onclick="toggleCard('card-6')">
+    <h2><span class="card-num">6</span> <span data-i18n="s6_title">QLoRA — Fine-Tuning יעיל</span></h2>
+    <span class="chevron">&#9662;</span>
+  </div>
+  <div class="card-body"><div class="card-content">
+
+    <h3 data-i18n="s6_levels_title">3 רמות של Fine-Tuning</h3>
+
+    <div class="interactive">
+      <div class="interactive-label" data-i18n="s6_inter_label">אינטראקטיבי — השוואה ויזואלית</div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" onclick="setQLora('full',this)" data-i18n="s6_full">Full Fine-Tuning</button>
+        <button class="toggle-btn" onclick="setQLora('lora',this)">LoRA</button>
+        <button class="toggle-btn" onclick="setQLora('qlora',this)">QLoRA</button>
+      </div>
+      <div id="qlora-visual" class="qlora-visual"></div>
+      <div id="qlora-details"></div>
+    </div>
+
+    <h3 data-i18n="s6_when_title">מתי כן ומתי לא?</h3>
+    <div class="compare-row">
+      <div class="compare-box" style="border-color:var(--green)">
+        <h4 data-i18n="s6_yes_title" style="color:var(--green)">✅ כן — Fine-Tuning</h4>
+        <ul>
+          <li data-i18n="s6_yes1">10,000+ דוגמאות מתויגות</li>
+          <li data-i18n="s6_yes2">Prompt engineering לא מספיק</li>
+          <li data-i18n="s6_yes3">צריך שליטה מלאה על הסגנון/פורמט</li>
+        </ul>
+      </div>
+      <div class="compare-box" style="border-color:var(--red)">
+        <h4 data-i18n="s6_no_title" style="color:var(--red)">❌ לא — Prompt Engineering מספיק</h4>
+        <ul>
+          <li data-i18n="s6_no1">Gemini API + prompt עושה את העבודה</li>
+          <li data-i18n="s6_no2">דאטה מתויג מועט</li>
+          <li data-i18n="s6_no3">משימה כללית (לא niche)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout" data-i18n="s6_metaphor">💡 <strong>Fine-tuning = כירורגיה. Prompt engineering = תרופה.</strong> תתחיל מתרופה.</div>
+
+  </div></div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ===== Translations =====
+const T = {
+  he: {
+    title: 'מדריך מושגים — עומר | Smart Shield',
+    subtitle: 'מדריך עצמאי ואינטראקטיבי למושגי Data Science ו-Machine Learning. לחץ על כל נושא כדי לפתוח.',
+    s1_title: 'VIF — Variance Inflation Factor',
+    s1_diff_title: 'ההבדל בין Correlation ל-VIF',
+    s1_corr: '<strong>Correlation</strong> = בודק קשר בין 2 פיצ\'רים (זוגות)',
+    s1_vif: '<strong>VIF</strong> = בודק כמה טוב <em>כל</em> הפיצ\'רים ביחד יכולים לחזות פיצ\'ר אחד',
+    s1_how_title: 'איך VIF עובד (מכנית)',
+    s1_step1: 'קח פיצ\'ר X₁',
+    s1_step2: 'נסה לחזות X₁ מכל השאר (Linear Regression: X₁ ~ X₂ + X₃ + ... + Xₙ)',
+    s1_step3: 'קבל R² של הרגרסיה',
+    s1_step4: 'VIF = 1 / (1 - R²)',
+    s1_interactive_label: 'אינטראקטיבי — משחק עם R²',
+    s1_r2_label: 'R² =',
+    s1_danger: 'רמת סכנה',
+    s1_ok: 'OK',
+    s1_ref_title: 'טבלת ייחוס',
+    s1_th_meaning: 'משמעות',
+    s1_clean: '🟢 נקי',
+    s1_fine: '🟡 OK',
+    s1_thresh: '🟠 סף — שקול להסיר!',
+    s1_remove: '🔴 הסר!',
+    s1_miss_title: 'למה VIF תופס מה שCorrelation מפספס',
+    s1_miss_body: 'דוגמה: ל-A יש correlation מתון עם B (0.4) ו-correlation מתון עם C (0.3). <strong>אבל</strong> A = B + C בדיוק. Correlation בודק רק זוגות — הוא לא רואה את השילוב. VIF מריץ רגרסיה של A על <em>כל</em> השאר ביחד, מקבל R²=1 — ולכן VIF = ∞.',
+    s1_omer: '🔗 <strong>הקשר לפרויקט שלך:</strong> מצאת r=1.0 בין <code>game_concentration</code> ל-<code>top_game_bet_ratio</code>. VIF היה תופס את זה — ועוד מקרים שcorrelation מפספס.',
+    s2_title: 'Feature Engineering Patterns',
+    s2_int_title: 'Interactions (A × B)',
+    s2_int1: 'מכפילים שני פיצ\'רים — תופסים קשר שאף אחד לבד לא מראה',
+    s2_int2: 'דוגמה: <code>game_concentration_x_ngr</code> (שהסרת ב-Ablation!)',
+    s2_int3: 'מתי: כשהשילוב חשוב יותר מכל פיצ\'ר בנפרד',
+    s2_rat_title: 'Ratios (A / B)',
+    s2_rat1: 'מחלקים — מנרמלים ומראים יחס',
+    s2_rat2: 'דוגמאות: <code>lobby_pack_ratio</code>, <code>bonus_to_bet_ratio</code>',
+    s2_rat3: 'מתי: כשהיחס חשוב, לא הערכים המוחלטים',
+    s2_bin_title: 'Binning (רציף &rarr; קטגוריאלי)',
+    s2_bin1: 'חותכים לקבוצות',
+    s2_bin2: 'דוגמה: <code>financial_exposure</code> tiers',
+    s2_bin3: 'מתי: כשיש ספי החלטה טבעיים',
+    s2_inter_label: 'אינטראקטיבי — טרנספורמציית פיצ\'רים',
+    s2_raw: 'Raw',
+    s2_interact: 'Interaction',
+    s2_ratio: 'Ratio',
+    s2_binned: 'Binning',
+    s3_title: 'Stacking (Meta-Model)',
+    s3_layers_title: 'שכבות',
+    s3_l0: '<strong>Layer 0:</strong> 3 מודלים בסיסיים (LightGBM, Random Forest, LogReg) — כל אחד מייצר תחזית',
+    s3_oof: '<strong>Out-of-Fold:</strong> למה אי אפשר פשוט לחזות על ה-training data? כי זה leakage! משתמשים ב-K-fold כדי לקבל תחזיות "כנות"',
+    s3_l1: '<strong>Layer 1:</strong> Meta-learner (בדרך כלל LogReg פשוט) מקבל את תחזיות Layer 0 כ-input, לומד שילוב אופטימלי',
+    s3_inter_label: 'אינטראקטיבי — צעד אחר צעד',
+    s3_step: 'שלב',
+    s3_leakage: '⚠️ <strong>למה לא להשתמש בתחזיות רגילות על training?</strong> המודל כבר "ראה" את הדוגמאות האלה. הוא יחזיר תוצאות טובות מדי, והMeta-model ילמד לסמוך עליו יותר מדי. בדאטה חדש — הכל יתפרק.',
+    s4_title: 'Blending',
+    s4_diff_title: 'Stacking vs Blending',
+    s4_split: 'חלוקת דאטה',
+    s4_s_split: 'K-fold CV (כל הדאטה בשימוש)',
+    s4_b_split: 'Holdout פשוט (70/30)',
+    s4_complex: 'מורכבות',
+    s4_s_complex: 'גבוהה (לולאת CV)',
+    s4_b_complex: 'נמוכה (חלוקה אחת)',
+    s4_eff: 'יעילות דאטה',
+    s4_s_eff: 'טובה יותר (משתמש בכל הדאטה)',
+    s4_b_eff: 'מבזבז 30% על blending',
+    s4_impl: 'מימוש',
+    s4_s_impl: 'קשה יותר',
+    s4_b_impl: 'קל יותר',
+    s4_when_title: 'מתי להשתמש בכל אחד?',
+    s4_when_s1: 'דאטה קטן-בינוני (כל דוגמה חשובה)',
+    s4_when_s2: 'רוצים ביצועים מקסימליים',
+    s4_when_s3: 'תחרויות Kaggle',
+    s4_when_b1: 'דאטה גדול (30% הם עדיין הרבה)',
+    s4_when_b2: 'צריכים מהירות ופשטות',
+    s4_when_b3: 'Production systems',
+    s5_title: 'RAG Pipeline',
+    s5_scenario: '📄 <strong>תרחיש:</strong> יש לך 200 מסמכי policy של החברה. איך הChatbot שלך יענה על שאלות לגביהם?',
+    s5_inter_label: 'אינטראקטיבי — Pipeline צעד אחר צעד',
+    s5_chunk: '<strong>Chunk</strong> — שוברים מסמכים לחתיכות (200-500 מילים)',
+    s5_embed: '<strong>Embed</strong> — כל חתיכה הופכת לוקטור (מספרים)',
+    s5_store: '<strong>Store</strong> — שומרים ב-Vector DB (כמו Pinecone, Weaviate)',
+    s5_query: '<strong>Query</strong> — שאלת המשתמש הופכת לוקטור',
+    s5_retrieve: '<strong>Retrieve</strong> — מוצאים 3-5 חתיכות הכי דומות (cosine similarity)',
+    s5_generate: '<strong>Generate</strong> — מזריקים ל-prompt + LLM עונה עם מקורות',
+    s5_compare_title: 'עם RAG vs בלי RAG',
+    s5_without: 'בלי RAG',
+    s5_with: 'עם RAG',
+    s6_title: 'QLoRA — Fine-Tuning יעיל',
+    s6_levels_title: '3 רמות של Fine-Tuning',
+    s6_inter_label: 'אינטראקטיבי — השוואה ויזואלית',
+    s6_full: 'Full Fine-Tuning',
+    s6_when_title: 'מתי כן ומתי לא?',
+    s6_yes_title: '✅ כן — Fine-Tuning',
+    s6_yes1: '10,000+ דוגמאות מתויגות',
+    s6_yes2: 'Prompt engineering לא מספיק',
+    s6_yes3: 'צריך שליטה מלאה על הסגנון/פורמט',
+    s6_no_title: '❌ לא — Prompt Engineering מספיק',
+    s6_no1: 'Gemini API + prompt עושה את העבודה',
+    s6_no2: 'דאטה מתויג מועט',
+    s6_no3: 'משימה כללית (לא niche)',
+    s6_metaphor: '💡 <strong>Fine-tuning = כירורגיה. Prompt engineering = תרופה.</strong> תתחיל מתרופה.'
+  },
+  en: {
+    title: 'Concepts Guide — Omer | Smart Shield',
+    subtitle: 'An interactive self-study reference for Data Science and Machine Learning concepts. Click any topic to expand.',
+    s1_title: 'VIF — Variance Inflation Factor',
+    s1_diff_title: 'Correlation vs VIF',
+    s1_corr: '<strong>Correlation</strong> = checks the relationship between 2 features (pairs)',
+    s1_vif: '<strong>VIF</strong> = checks how well <em>all other</em> features together can predict one feature',
+    s1_how_title: 'How VIF Works (Mechanics)',
+    s1_step1: 'Take feature X₁',
+    s1_step2: 'Try to predict X₁ from all others (Linear Regression: X₁ ~ X₂ + X₃ + ... + Xₙ)',
+    s1_step3: 'Get R² from the regression',
+    s1_step4: 'VIF = 1 / (1 - R²)',
+    s1_interactive_label: 'Interactive — Play with R²',
+    s1_r2_label: 'R² =',
+    s1_danger: 'Danger Level',
+    s1_ok: 'OK',
+    s1_ref_title: 'Reference Table',
+    s1_th_meaning: 'Meaning',
+    s1_clean: '🟢 Clean',
+    s1_fine: '🟡 OK',
+    s1_thresh: '🟠 Threshold — consider removing!',
+    s1_remove: '🔴 Remove!',
+    s1_miss_title: 'Why VIF Catches What Correlation Misses',
+    s1_miss_body: 'Example: A has moderate correlation with B (0.4) and moderate with C (0.3). <strong>But</strong> A = B + C perfectly. Correlation only checks pairs — it misses the combination. VIF runs regression of A on <em>all</em> others together, gets R²=1 — so VIF = ∞.',
+    s1_omer: '🔗 <strong>Connection to your project:</strong> You found r=1.0 between <code>game_concentration</code> and <code>top_game_bet_ratio</code>. VIF would catch that — plus cases correlation misses.',
+    s2_title: 'Feature Engineering Patterns',
+    s2_int_title: 'Interactions (A × B)',
+    s2_int1: 'Multiply two features — captures relationships neither shows alone',
+    s2_int2: 'Example: <code>game_concentration_x_ngr</code> (which you removed in Ablation!)',
+    s2_int3: 'When: the combination matters more than each feature individually',
+    s2_rat_title: 'Ratios (A / B)',
+    s2_rat1: 'Divide — normalizes and shows proportions',
+    s2_rat2: 'Examples: <code>lobby_pack_ratio</code>, <code>bonus_to_bet_ratio</code>',
+    s2_rat3: 'When: the ratio matters, not the absolute values',
+    s2_bin_title: 'Binning (Continuous &rarr; Categorical)',
+    s2_bin1: 'Cut into groups',
+    s2_bin2: 'Example: <code>financial_exposure</code> tiers',
+    s2_bin3: 'When: there are natural decision thresholds',
+    s2_inter_label: 'Interactive — Feature Transformations',
+    s2_raw: 'Raw',
+    s2_interact: 'Interaction',
+    s2_ratio: 'Ratio',
+    s2_binned: 'Binning',
+    s3_title: 'Stacking (Meta-Model)',
+    s3_layers_title: 'Layers',
+    s3_l0: '<strong>Layer 0:</strong> 3 base models (LightGBM, Random Forest, LogReg) — each produces predictions',
+    s3_oof: '<strong>Out-of-Fold:</strong> Why can\'t you just predict on training data? That\'s leakage! Use K-fold to get "honest" predictions',
+    s3_l1: '<strong>Layer 1:</strong> Meta-learner (usually simple LogReg) takes Layer 0 predictions as input, learns optimal combination',
+    s3_inter_label: 'Interactive — Step by Step',
+    s3_step: 'Step',
+    s3_leakage: '⚠️ <strong>Why not use regular predictions on training data?</strong> The model already "saw" these examples. It will return overly optimistic results, and the Meta-model will learn to over-trust it. On new data — everything falls apart.',
+    s4_title: 'Blending',
+    s4_diff_title: 'Stacking vs Blending',
+    s4_split: 'Data split',
+    s4_s_split: 'K-fold CV (all data used)',
+    s4_b_split: 'Simple holdout (70/30)',
+    s4_complex: 'Complexity',
+    s4_s_complex: 'Higher (CV loop)',
+    s4_b_complex: 'Lower (one split)',
+    s4_eff: 'Data efficiency',
+    s4_s_eff: 'Better (uses all data)',
+    s4_b_eff: 'Wastes 30% for blending',
+    s4_impl: 'Implementation',
+    s4_s_impl: 'Harder',
+    s4_b_impl: 'Easier',
+    s4_when_title: 'When to use each?',
+    s4_when_s1: 'Small-medium data (every sample counts)',
+    s4_when_s2: 'Want maximum performance',
+    s4_when_s3: 'Kaggle competitions',
+    s4_when_b1: 'Large data (30% is still a lot)',
+    s4_when_b2: 'Need speed and simplicity',
+    s4_when_b3: 'Production systems',
+    s5_title: 'RAG Pipeline',
+    s5_scenario: '📄 <strong>Scenario:</strong> You have 200 company policy documents. How does your Chatbot answer questions about them?',
+    s5_inter_label: 'Interactive — Pipeline Step by Step',
+    s5_chunk: '<strong>Chunk</strong> — Break documents into pieces (200-500 words)',
+    s5_embed: '<strong>Embed</strong> — Each chunk becomes a vector (numbers)',
+    s5_store: '<strong>Store</strong> — Save in Vector DB (e.g., Pinecone, Weaviate)',
+    s5_query: '<strong>Query</strong> — User\'s question becomes a vector',
+    s5_retrieve: '<strong>Retrieve</strong> — Find 3-5 most similar chunks (cosine similarity)',
+    s5_generate: '<strong>Generate</strong> — Inject into prompt + LLM answers with sources',
+    s5_compare_title: 'With RAG vs Without RAG',
+    s5_without: 'Without RAG',
+    s5_with: 'With RAG',
+    s6_title: 'QLoRA — Efficient Fine-Tuning',
+    s6_levels_title: '3 Levels of Fine-Tuning',
+    s6_inter_label: 'Interactive — Visual Comparison',
+    s6_full: 'Full Fine-Tuning',
+    s6_when_title: 'When to use / When not?',
+    s6_yes_title: '✅ Yes — Fine-Tuning',
+    s6_yes1: '10,000+ labeled examples',
+    s6_yes2: 'Prompt engineering isn\'t enough',
+    s6_yes3: 'Need full control over style/format',
+    s6_no_title: '❌ No — Prompt Engineering is enough',
+    s6_no1: 'Gemini API + prompt does the job',
+    s6_no2: 'Little labeled data',
+    s6_no3: 'General task (not niche)',
+    s6_metaphor: '💡 <strong>Fine-tuning = surgery. Prompt engineering = medicine.</strong> Start with medicine.'
+  }
+};
+
+// ===== Language =====
+let currentLang = 'he';
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-he').classList.toggle('active', lang === 'he');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (T[lang][key]) el.innerHTML = T[lang][key];
+  });
+  // Re-render dynamic content
+  updateVIF();
+  renderFEDataset(currentFEView);
+  renderStackStep(currentStackStep);
+  renderRAGCompare(currentRAGCompare);
+  renderQLora(currentQLora);
+}
+
+// ===== Card toggle =====
+function toggleCard(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+// ===== VIF Slider =====
+function updateVIF() {
+  const slider = document.getElementById('vif-slider');
+  const r2 = slider.value / 100;
+  const vif = r2 >= 0.999 ? Infinity : 1 / (1 - r2);
+  const r2Str = r2.toFixed(2);
+  const vifStr = vif === Infinity ? '∞' : vif.toFixed(2);
+
+  document.getElementById('vif-r2-val').textContent = r2Str;
+  document.getElementById('vif-r2-box').textContent = r2Str;
+  document.getElementById('vif-val-box').textContent = vifStr;
+
+  let color, pct, statusHe, statusEn;
+  if (vif < 5) { color = 'var(--green)'; pct = Math.min(vif / 10 * 100, 100); statusHe = 'נקי'; statusEn = 'Clean'; }
+  else if (vif < 10) { color = 'var(--yellow)'; pct = Math.min(vif / 10 * 100, 100); statusHe = 'גבולי'; statusEn = 'Borderline'; }
+  else { color = 'var(--red)'; pct = 100; statusHe = 'הסר!'; statusEn = 'Remove!'; }
+
+  document.getElementById('vif-val-box').style.color = color;
+  document.getElementById('vif-bar').style.width = pct + '%';
+  document.getElementById('vif-bar').style.background = color;
+  document.getElementById('vif-status').style.color = color;
+  document.getElementById('vif-status').textContent = currentLang === 'he' ? statusHe : statusEn;
+}
+
+// ===== Feature Engineering Dataset =====
+let currentFEView = 'raw';
+const feData = [
+  { deposits: 500, bets: 1200, bonus: 80 },
+  { deposits: 150, bets: 900, bonus: 200 },
+  { deposits: 3000, bets: 5000, bonus: 50 },
+  { deposits: 80, bets: 400, bonus: 120 },
+];
+
+function setFEView(view, btn) {
+  currentFEView = view;
+  btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFEDataset(view);
+}
+
+function renderFEDataset(view) {
+  const el = document.getElementById('fe-dataset');
+  const isHe = currentLang === 'he';
+  let headers, rows;
+
+  if (view === 'raw') {
+    headers = ['deposits', 'bets', 'bonus'];
+    rows = feData.map(d => [d.deposits, d.bets, d.bonus]);
+  } else if (view === 'interaction') {
+    headers = ['deposits', 'bets', 'deposits × bets'];
+    rows = feData.map(d => [d.deposits, d.bets, (d.deposits * d.bets).toLocaleString()]);
+  } else if (view === 'ratio') {
+    headers = ['deposits', 'bets', 'bonus / deposits'];
+    rows = feData.map(d => [d.deposits, d.bets, (d.bonus / d.deposits).toFixed(2)]);
+  } else {
+    const binLabel = (v) => v < 100 ? (isHe ? 'נמוך' : 'Low') : v < 500 ? (isHe ? 'בינוני' : 'Medium') : (isHe ? 'גבוה' : 'High');
+    headers = ['deposits', isHe ? 'deposits (bin)' : 'deposits (bin)', isHe ? 'רמת חשיפה' : 'exposure level'];
+    rows = feData.map(d => [d.deposits, binLabel(d.deposits), binLabel(d.deposits)]);
+  }
+
+  let html = '<div class="mini-dataset"><div class="mini-row">' +
+    headers.map(h => `<div class="mini-cell header">${h}</div>`).join('') +
+    '</div>' +
+    rows.map(r => '<div class="mini-row">' + r.map(c => `<div class="mini-cell">${c}</div>`).join('') + '</div>').join('') +
+    '</div>';
+  if (view === 'interaction') html += `<p style="margin-top:8px;font-size:.85rem;color:var(--text-dim)">${isHe ? '💡 deposits × bets תופס שילובים — שחקן עם הפקדות גבוהות וגם הימורים גבוהים שונה ממי שרק אחד מהם גבוה' : '💡 deposits × bets captures combinations — a player with high deposits AND high bets differs from one where only one is high'}</p>`;
+  if (view === 'ratio') html += `<p style="margin-top:8px;font-size:.85rem;color:var(--text-dim)">${isHe ? '💡 bonus/deposits מנרמל — 80/500=0.16 vs 120/80=1.5 — מראה מי תלוי בבונוסים' : '💡 bonus/deposits normalizes — 80/500=0.16 vs 120/80=1.5 — shows who depends on bonuses'}</p>`;
+  if (view === 'binned') html += `<p style="margin-top:8px;font-size:.85rem;color:var(--text-dim)">${isHe ? '💡 Binning הופך ערכים רציפים לקטגוריות — מודלים כמו LogReg יכולים לתפוס ספי החלטה' : '💡 Binning converts continuous values to categories — models like LogReg can capture decision thresholds'}</p>`;
+  el.innerHTML = html;
+}
+
+// ===== Stacking Steps =====
+let currentStackStep = 1;
+const stackStepsHe = {
+  1: '<div style="text-align:center"><div style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
+     '<div style="background:var(--bg);padding:12px 20px;border-radius:8px;border:2px solid var(--purple-1)">Fold 1</div>' +
+     '<div style="background:var(--bg);padding:12px 20px;border-radius:8px;border:2px solid var(--purple-2)">Fold 2</div>' +
+     '<div style="background:var(--bg);padding:12px 20px;border-radius:8px;border:2px solid var(--pink)">Fold 3</div>' +
+     '</div><p style="margin-top:12px;color:var(--text-dim)">מחלקים את ה-training data ל-3 folds</p></div>',
+  2: '<p>כל מודל בסיס מתאמן על 2 folds, וחוזה על ה-fold שנשאר:</p>' +
+     '<div style="font-family:monospace;font-size:.85rem;background:var(--bg);padding:12px;border-radius:8px;margin:8px 0">' +
+     'LightGBM: train [1,2] → predict [3]<br>LightGBM: train [1,3] → predict [2]<br>LightGBM: train [2,3] → predict [1]<br>' +
+     '<span style="color:var(--text-dim)">...חוזרים על זה ל-RF ו-LogReg</span></div>',
+  3: '<p>אוספים את כל התחזיות ה-out-of-fold:</p>' +
+     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:.85rem;font-family:monospace;margin:8px 0">' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center;color:var(--purple-2)">Sample</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center;color:var(--purple-2)">LGBM</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center;color:var(--purple-2)">RF</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center;color:var(--purple-2)">LogReg</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">#1</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.82</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.75</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.68</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">#2</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.31</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.45</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.52</div>' +
+     '</div><p style="color:var(--text-dim);font-size:.85rem">כל תחזית נעשתה על דאטה שהמודל לא ראה — "כנה"!</p>',
+  4: '<p>Meta-model (LogReg) מתאמן על טבלת ה-OOF:</p>' +
+     '<div style="text-align:center;margin:12px 0">' +
+     '<div style="display:inline-block;background:var(--bg);padding:16px 24px;border-radius:8px;border:2px solid var(--pink)">' +
+     '<strong style="color:var(--pink)">Meta-Learner</strong><br>' +
+     '<span style="font-size:.85rem">Input: [LGBM_pred, RF_pred, LogReg_pred]</span><br>' +
+     '<span style="font-size:.85rem">Output: final prediction</span><br>' +
+     '<span style="font-size:.85rem;color:var(--text-dim)">לומד: LGBM טוב בחלק מהמקרים, RF באחרים...</span>' +
+     '</div></div>',
+  5: '<p><strong>על דאטה חדש:</strong></p>' +
+     '<div style="text-align:center;font-size:.9rem">' +
+     '<div style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0">' +
+     '<div style="background:var(--bg);padding:10px 16px;border-radius:8px">LGBM → 0.73</div>' +
+     '<div style="background:var(--bg);padding:10px 16px;border-radius:8px">RF → 0.81</div>' +
+     '<div style="background:var(--bg);padding:10px 16px;border-radius:8px">LogReg → 0.65</div>' +
+     '</div>' +
+     '<div style="font-size:1.5rem;margin:4px 0">↓</div>' +
+     '<div style="display:inline-block;background:var(--bg);padding:12px 20px;border-radius:8px;border:2px solid var(--pink)">' +
+     '<strong style="color:var(--pink)">Meta-Model</strong> → <strong style="color:var(--green)">0.78</strong>' +
+     '</div>' +
+     '<p style="margin-top:8px;color:var(--text-dim)">שילוב חכם — לא פשוט ממוצע!</p></div>'
+};
+const stackStepsEn = {
+  1: '<div style="text-align:center"><div style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
+     '<div style="background:var(--bg);padding:12px 20px;border-radius:8px;border:2px solid var(--purple-1)">Fold 1</div>' +
+     '<div style="background:var(--bg);padding:12px 20px;border-radius:8px;border:2px solid var(--purple-2)">Fold 2</div>' +
+     '<div style="background:var(--bg);padding:12px 20px;border-radius:8px;border:2px solid var(--pink)">Fold 3</div>' +
+     '</div><p style="margin-top:12px;color:var(--text-dim)">Split training data into 3 folds</p></div>',
+  2: '<p>Each base model trains on 2 folds, predicts on the held-out fold:</p>' +
+     '<div style="font-family:monospace;font-size:.85rem;background:var(--bg);padding:12px;border-radius:8px;margin:8px 0">' +
+     'LightGBM: train [1,2] → predict [3]<br>LightGBM: train [1,3] → predict [2]<br>LightGBM: train [2,3] → predict [1]<br>' +
+     '<span style="color:var(--text-dim)">...repeat for RF and LogReg</span></div>',
+  3: '<p>Collect all out-of-fold predictions:</p>' +
+     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:.85rem;font-family:monospace;margin:8px 0">' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center;color:var(--purple-2)">Sample</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center;color:var(--purple-2)">LGBM</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center;color:var(--purple-2)">RF</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center;color:var(--purple-2)">LogReg</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">#1</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.82</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.75</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.68</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">#2</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.31</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.45</div>' +
+     '<div style="background:var(--bg);padding:6px;border-radius:4px;text-align:center">0.52</div>' +
+     '</div><p style="color:var(--text-dim);font-size:.85rem">Each prediction was made on data the model never saw — "honest"!</p>',
+  4: '<p>Meta-model (LogReg) trains on the OOF table:</p>' +
+     '<div style="text-align:center;margin:12px 0">' +
+     '<div style="display:inline-block;background:var(--bg);padding:16px 24px;border-radius:8px;border:2px solid var(--pink)">' +
+     '<strong style="color:var(--pink)">Meta-Learner</strong><br>' +
+     '<span style="font-size:.85rem">Input: [LGBM_pred, RF_pred, LogReg_pred]</span><br>' +
+     '<span style="font-size:.85rem">Output: final prediction</span><br>' +
+     '<span style="font-size:.85rem;color:var(--text-dim)">Learns: LGBM is good for some cases, RF for others...</span>' +
+     '</div></div>',
+  5: '<p><strong>On new data:</strong></p>' +
+     '<div style="text-align:center;font-size:.9rem">' +
+     '<div style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0">' +
+     '<div style="background:var(--bg);padding:10px 16px;border-radius:8px">LGBM → 0.73</div>' +
+     '<div style="background:var(--bg);padding:10px 16px;border-radius:8px">RF → 0.81</div>' +
+     '<div style="background:var(--bg);padding:10px 16px;border-radius:8px">LogReg → 0.65</div>' +
+     '</div>' +
+     '<div style="font-size:1.5rem;margin:4px 0">↓</div>' +
+     '<div style="display:inline-block;background:var(--bg);padding:12px 20px;border-radius:8px;border:2px solid var(--pink)">' +
+     '<strong style="color:var(--pink)">Meta-Model</strong> → <strong style="color:var(--green)">0.78</strong>' +
+     '</div>' +
+     '<p style="margin-top:8px;color:var(--text-dim)">Smart combination — not just an average!</p></div>'
+};
+
+function setStackStep(n) {
+  currentStackStep = n;
+  document.querySelectorAll('#stack-steps .step-btn').forEach((b, i) => b.classList.toggle('active', i === n - 1));
+  renderStackStep(n);
+}
+function renderStackStep(n) {
+  const steps = currentLang === 'he' ? stackStepsHe : stackStepsEn;
+  document.getElementById('stack-content').innerHTML = steps[n];
+}
+
+// ===== RAG Pipeline =====
+function setRAGStep(n) {
+  document.querySelectorAll('#rag-steps .step-btn').forEach((b, i) => b.classList.toggle('active', i === n - 1));
+  for (let i = 1; i <= 6; i++) {
+    document.getElementById('rag-s' + i).classList.toggle('active', i <= n);
+  }
+}
+
+let currentRAGCompare = 'with';
+function setRAGCompare(mode, btn) {
+  currentRAGCompare = mode;
+  btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRAGCompare(mode);
+}
+function renderRAGCompare(mode) {
+  const el = document.getElementById('rag-compare');
+  if (mode === 'without') {
+    el.style.borderColor = 'var(--red)';
+    el.innerHTML = currentLang === 'he'
+      ? '<strong style="color:var(--red)">בלי RAG:</strong><br>"מדיניות ההחזרים שלנו מאפשרת החזר תוך 30 יום" <em style="color:var(--red)">(המצאה! אין לLLM מושג מה המדיניות האמיתית)</em>'
+      : '<strong style="color:var(--red)">Without RAG:</strong><br>"Our return policy allows returns within 30 days" <em style="color:var(--red)">(Hallucinated! The LLM has no idea about the actual policy)</em>';
+  } else {
+    el.style.borderColor = 'var(--green)';
+    el.innerHTML = currentLang === 'he'
+      ? '<strong style="color:var(--green)">עם RAG:</strong><br>"לפי מסמך מדיניות החזרים (סעיף 3.2), ניתן להחזיר מוצר תוך 14 ימי עסקים בתנאי שלא נפתחה האריזה."<br><span style="color:var(--text-dim);font-size:.85rem">📎 מקור: policy_returns_v3.pdf, עמ\' 4</span>'
+      : '<strong style="color:var(--green)">With RAG:</strong><br>"According to the returns policy document (section 3.2), products can be returned within 14 business days provided the packaging is unopened."<br><span style="color:var(--text-dim);font-size:.85rem">📎 Source: policy_returns_v3.pdf, p. 4</span>';
+  }
+}
+
+// ===== QLoRA =====
+let currentQLora = 'full';
+function setQLora(mode, btn) {
+  currentQLora = mode;
+  btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderQLora(mode);
+}
+function renderQLora(mode) {
+  const vis = document.getElementById('qlora-visual');
+  const det = document.getElementById('qlora-details');
+  const isHe = currentLang === 'he';
+
+  const configs = {
+    full: {
+      bars: [
+        { h: 200, color: 'linear-gradient(180deg, var(--red), #b91c1c)', label: isHe ? 'כל המשקלים' : 'All Weights', size: '100%', w: '100%' }
+      ],
+      detail: isHe
+        ? '<strong>Full Fine-Tuning:</strong> מעדכנים 100% מהמשקלים. דורש GPU ענק (80GB+ VRAM). יקר, איטי, אבל הכי חזק כשיש מספיק דאטה ומשאבים.'
+        : '<strong>Full Fine-Tuning:</strong> Updates 100% of weights. Requires massive GPU (80GB+ VRAM). Expensive, slow, but most powerful with enough data and resources.'
+    },
+    lora: {
+      bars: [
+        { h: 200, color: 'linear-gradient(180deg, #475569, #334155)', label: isHe ? 'מודל מקורי (קפוא)' : 'Original Model (frozen)', size: '98%', w: '70%' },
+        { h: 80, color: 'linear-gradient(180deg, var(--purple-1), var(--purple-2))', label: 'LoRA Adapters', size: '1-2%', w: '30%' }
+      ],
+      detail: isHe
+        ? '<strong>LoRA:</strong> מוסיפים מטריצות קטנות (low-rank) ליד המשקלים המקוריים. משנים רק 1-2% מהפרמטרים. GPU בינוני (24GB). המודל המקורי קפוא — רק הadapters מתעדכנים.'
+        : '<strong>LoRA:</strong> Add small matrices (low-rank) alongside original weights. Only 1-2% of parameters change. Medium GPU (24GB). Original model is frozen — only adapters update.'
+    },
+    qlora: {
+      bars: [
+        { h: 120, color: 'linear-gradient(180deg, #475569, #1e293b)', label: isHe ? 'מודל דחוס 4-bit' : 'Compressed 4-bit Model', size: isHe ? '25% מהגודל' : '25% of size', w: '55%' },
+        { h: 80, color: 'linear-gradient(180deg, var(--purple-1), var(--purple-2))', label: 'LoRA 16-bit', size: '1-2%', w: '25%' },
+        { h: 40, color: 'linear-gradient(180deg, var(--green), #059669)', label: isHe ? 'חיסכון!' : 'Savings!', size: isHe ? '8-12GB GPU' : '8-12GB GPU', w: '20%' }
+      ],
+      detail: isHe
+        ? '<strong>QLoRA:</strong> דוחסים מודל בסיס ל-4bit (quantization) — חותכים גודל ב-75%! LoRA adapters נשארים ב-16bit (לדיוק). GPU קטן (8-12GB) — אפשר להריץ על Colab!'
+        : '<strong>QLoRA:</strong> Compress base model to 4-bit (quantization) — 75% size reduction! LoRA adapters stay at 16-bit (for precision). Small GPU (8-12GB) — can run on Colab!'
+    }
+  };
+
+  const c = configs[mode];
+  vis.innerHTML = c.bars.map(b =>
+    `<div class="qlora-bar" style="height:${b.h}px;background:${b.color};width:${b.w}">` +
+    `<div class="bar-label">${b.label}</div>` +
+    `<div class="bar-size">${b.size}</div></div>`
+  ).join('');
+  det.innerHTML = `<p style="margin-top:12px">${c.detail}</p>`;
+}
+
+// ===== Init =====
+document.addEventListener('DOMContentLoaded', () => {
+  updateVIF();
+  renderFEDataset('raw');
+  renderStackStep(1);
+  renderRAGCompare('with');
+  renderQLora('full');
+});
+</script>
+</body>
+</html>
