@@ -568,6 +568,32 @@ body {
   </div></div>
 </div>
 
+<!-- ===== SECTION 7: Dummy Models ===== -->
+<div class="card" id="card-7">
+  <div class="card-header" onclick="toggleCard('card-7')">
+    <h2><span class="card-num">7</span> <span data-i18n="s7_title">Dummy Models — הבייסליין שאתה חייב לנצח</span></h2>
+    <span class="chevron">&#9662;</span>
+  </div>
+  <div class="card-body"><div class="card-content">
+
+    <p data-i18n="s7_intro">לפני שאתה חוגג 85% accuracy — בדוק מה דאמי עושה. אם הדאמי מנצח את המודל שלך, משהו שבור.</p>
+
+    <div class="callout" data-i18n="s7_why">💡 Dummy = predictor שלא רואה את הפיצ'רים — רק את סטטיסטיקות ה-target. המודל שלך חייב לנצח אותו ב-metric העסקי. בבעיות לא־מאוזנות (זיהוי אביוזרים!) accuracy לבד = שקר נוח.</div>
+
+    <div class="interactive">
+      <div class="interactive-label" data-i18n="s7_inter_label">אינטראקטיבי — בחר סוג משימה</div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" onclick="setDummyType('cls', this)" data-i18n="s7_cls">Classification</button>
+        <button class="toggle-btn" onclick="setDummyType('reg', this)" data-i18n="s7_reg">Regression</button>
+      </div>
+      <div id="dummy-content"></div>
+    </div>
+
+    <div class="callout" data-i18n="s7_takeaway">🎯 <strong>לקח לפרויקט שלך:</strong> 91% accuracy על זיהוי אביוזרים = בדיוק מה ש־most_frequent נותן. תסתכל על PR-AUC, Precision@k, או Recall על מחלקת המיעוט.</div>
+
+  </div></div>
+</div>
+
 </div><!-- /container -->
 
 <script>
@@ -672,7 +698,14 @@ const T = {
     s6_no1: 'Gemini API + prompt עושה את העבודה',
     s6_no2: 'דאטה מתויג מועט',
     s6_no3: 'משימה כללית (לא niche)',
-    s6_metaphor: '💡 <strong>Fine-tuning = כירורגיה. Prompt engineering = תרופה.</strong> תתחיל מתרופה.'
+    s6_metaphor: '💡 <strong>Fine-tuning = כירורגיה. Prompt engineering = תרופה.</strong> תתחיל מתרופה.',
+    s7_title: 'Dummy Models — הבייסליין שאתה חייב לנצח',
+    s7_intro: 'לפני שאתה חוגג 85% accuracy — בדוק מה דאמי עושה. אם הדאמי מנצח את המודל שלך, משהו שבור.',
+    s7_why: '💡 Dummy = predictor שלא רואה את הפיצ\'רים — רק את סטטיסטיקות ה-target. המודל שלך חייב לנצח אותו ב-metric העסקי. בבעיות לא־מאוזנות (זיהוי אביוזרים!) accuracy לבד = שקר נוח.',
+    s7_inter_label: 'אינטראקטיבי — בחר סוג משימה',
+    s7_cls: 'Classification',
+    s7_reg: 'Regression',
+    s7_takeaway: '🎯 <strong>לקח לפרויקט שלך:</strong> 91% accuracy על זיהוי אביוזרים = בדיוק מה ש־most_frequent נותן. תסתכל על PR-AUC, Precision@k, או Recall על מחלקת המיעוט.'
   },
   en: {
     title: 'Concepts Guide — Omer | Smart Shield',
@@ -773,7 +806,14 @@ const T = {
     s6_no1: 'Gemini API + prompt does the job',
     s6_no2: 'Little labeled data',
     s6_no3: 'General task (not niche)',
-    s6_metaphor: '💡 <strong>Fine-tuning = surgery. Prompt engineering = medicine.</strong> Start with medicine.'
+    s6_metaphor: '💡 <strong>Fine-tuning = surgery. Prompt engineering = medicine.</strong> Start with medicine.',
+    s7_title: 'Dummy Models — The Baseline You Must Beat',
+    s7_intro: 'Before you celebrate 85% accuracy — check what a dummy gets. If the dummy beats your model, something is broken.',
+    s7_why: '💡 Dummy = a predictor that never sees the features — only target statistics. Your model must beat it on the business metric. In imbalanced problems (abuser detection!) accuracy alone is a convenient lie.',
+    s7_inter_label: 'Interactive — pick a task type',
+    s7_cls: 'Classification',
+    s7_reg: 'Regression',
+    s7_takeaway: '🎯 <strong>Takeaway for your project:</strong> 91% accuracy on abuser detection = exactly what most_frequent gives. Look at PR-AUC, Precision@k, or Recall on the minority class.'
   }
 };
 
@@ -796,6 +836,7 @@ function setLang(lang) {
   renderRAGStep();
   renderRAGCompare(currentRAGCompare);
   renderQLora(currentQLora);
+  renderDummy();
 }
 
 // ===== Card toggle =====
@@ -1137,6 +1178,87 @@ function renderQLora(mode) {
   det.innerHTML = `<p style="margin-top:12px">${c.detail}</p>`;
 }
 
+// ===== Dummy Models =====
+let currentDummyType = 'cls';
+
+const DUMMY_DATA = {
+  he: {
+    cls: `
+      <div class="callout" style="background:rgba(251,191,36,.08);border-color:var(--yellow)">
+        📋 <b>תרחיש:</b> 10,000 שחקנים · 9% אביוזרים (מחלקת מיעוט) · metric עסקי: למצוא אביוזרים בלי יותר מדי false positives
+      </div>
+      <table class="data-table" style="font-size:.84rem">
+        <thead><tr><th>Strategy</th><th>מה עושה</th><th>Accuracy</th><th>Precision (אביוזרים)</th><th>Recall (אביוזרים)</th></tr></thead>
+        <tbody>
+          <tr><td><code>most_frequent</code></td><td>תמיד "לא אביוזר" (הרוב)</td><td style="color:var(--green)">91%</td><td style="color:var(--red)">0%</td><td style="color:var(--red)">0%</td></tr>
+          <tr><td><code>stratified</code></td><td>אקראי לפי התפלגות (9/91)</td><td>~83%</td><td>~9%</td><td>~9%</td></tr>
+          <tr><td><code>uniform</code></td><td>50/50 אקראי</td><td>~50%</td><td>~9%</td><td>~50%</td></tr>
+          <tr><td><code>constant=1</code></td><td>תמיד "אביוזר"</td><td style="color:var(--red)">9%</td><td>9%</td><td style="color:var(--green)">100%</td></tr>
+        </tbody>
+      </table>
+      <div class="rag-note">⚠️ <b>91% accuracy</b> של most_frequent חושף את השקר של accuracy על דאטה לא־מאוזן. המודל שלך חייב לנצח את <b>stratified</b> ב־PR-AUC כדי לומר שהוא לומד משהו אמיתי.</div>
+    `,
+    reg: `
+      <div class="callout" style="background:rgba(251,191,36,.08);border-color:var(--yellow)">
+        📋 <b>תרחיש:</b> חיזוי LTV (ארנק החיים של שחקן) בדולרים · התפלגות מוטה מאוד (רוב $10-50, לוויתנים $10K+)
+      </div>
+      <table class="data-table" style="font-size:.84rem">
+        <thead><tr><th>Strategy</th><th>מה עושה</th><th>הניבוי בדוגמה</th><th>מתי מועיל</th></tr></thead>
+        <tbody>
+          <tr><td><code>mean</code></td><td>תמיד הממוצע של train</td><td>$120 (מנופח ע"י לוויתנים)</td><td>target סימטרי / נורמלי</td></tr>
+          <tr><td><code>median</code></td><td>תמיד החציון</td><td style="color:var(--green)">$45</td><td>target מוטה (LTV, הכנסה)</td></tr>
+          <tr><td><code>quantile</code> (q=0.9)</td><td>אחוזון 90</td><td>$500</td><td>הערכות שמרניות / worst-case</td></tr>
+          <tr><td><code>constant</code></td><td>ערך קבוע שנקבע ידנית</td><td>למשל $100</td><td>מינימום עסקי מוכתב</td></tr>
+        </tbody>
+      </table>
+      <div class="rag-note">⚠️ על target מוטה, <b>median</b> הוא בייסליין קשה יותר מ־mean — מודל שמנצח רק את mean לא בהכרח לומד משהו שימושי על המקרים הטיפוסיים.</div>
+    `
+  },
+  en: {
+    cls: `
+      <div class="callout" style="background:rgba(251,191,36,.08);border-color:var(--yellow)">
+        📋 <b>Scenario:</b> 10,000 players · 9% abusers (minority class) · Business metric: catch abusers with few false positives
+      </div>
+      <table class="data-table" style="font-size:.84rem">
+        <thead><tr><th>Strategy</th><th>What it does</th><th>Accuracy</th><th>Precision (abusers)</th><th>Recall (abusers)</th></tr></thead>
+        <tbody>
+          <tr><td><code>most_frequent</code></td><td>Always "not abuser" (majority)</td><td style="color:var(--green)">91%</td><td style="color:var(--red)">0%</td><td style="color:var(--red)">0%</td></tr>
+          <tr><td><code>stratified</code></td><td>Random following distribution (9/91)</td><td>~83%</td><td>~9%</td><td>~9%</td></tr>
+          <tr><td><code>uniform</code></td><td>50/50 random</td><td>~50%</td><td>~9%</td><td>~50%</td></tr>
+          <tr><td><code>constant=1</code></td><td>Always "abuser"</td><td style="color:var(--red)">9%</td><td>9%</td><td style="color:var(--green)">100%</td></tr>
+        </tbody>
+      </table>
+      <div class="rag-note">⚠️ <b>91% accuracy</b> from most_frequent exposes the lie of accuracy on imbalanced data. Your model must beat <b>stratified</b> on PR-AUC to claim it's actually learning something.</div>
+    `,
+    reg: `
+      <div class="callout" style="background:rgba(251,191,36,.08);border-color:var(--yellow)">
+        📋 <b>Scenario:</b> Predict player LTV (lifetime value) in dollars · Heavily skewed distribution (most $10-50, whales $10K+)
+      </div>
+      <table class="data-table" style="font-size:.84rem">
+        <thead><tr><th>Strategy</th><th>What it does</th><th>Prediction in this example</th><th>When useful</th></tr></thead>
+        <tbody>
+          <tr><td><code>mean</code></td><td>Always training mean</td><td>$120 (inflated by whales)</td><td>Symmetric / normal target</td></tr>
+          <tr><td><code>median</code></td><td>Always the median</td><td style="color:var(--green)">$45</td><td>Skewed target (LTV, income)</td></tr>
+          <tr><td><code>quantile</code> (q=0.9)</td><td>90th percentile</td><td>$500</td><td>Conservative / worst-case estimates</td></tr>
+          <tr><td><code>constant</code></td><td>Manually set fixed value</td><td>e.g., $100</td><td>Business-mandated minimum</td></tr>
+        </tbody>
+      </table>
+      <div class="rag-note">⚠️ On skewed targets, <b>median</b> is a harder baseline than <b>mean</b> — a model that only beats <code>mean</code> may not actually learn anything useful about typical cases.</div>
+    `
+  }
+};
+
+function setDummyType(type, btn) {
+  currentDummyType = type;
+  btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDummy();
+}
+
+function renderDummy() {
+  document.getElementById('dummy-content').innerHTML = DUMMY_DATA[currentLang][currentDummyType];
+}
+
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', () => {
   updateVIF();
@@ -1145,6 +1267,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderRAGStep();
   renderRAGCompare('with');
   renderQLora('full');
+  renderDummy();
 });
 </script>
 </body>
