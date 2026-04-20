@@ -197,14 +197,58 @@ body {
 .qlora-bar .bar-size { font-size: .8rem; color: var(--text-dim); }
 
 /* RAG pipeline */
-.rag-step {
-  display: flex; align-items: center; gap: 12px; padding: 10px;
-  background: var(--bg); border-radius: 8px; margin: 6px 0;
-  opacity: 0.3; transition: all .3s;
+.rag-panel { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 10px; }
+.rag-box {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px 14px 12px; position: relative;
 }
-.rag-step.active { opacity: 1; border-inline-start: 3px solid var(--purple-1); }
-.rag-icon { font-size: 1.3rem; width: 36px; text-align: center; }
-.rag-text { flex: 1; font-size: .9rem; }
+.rag-box-label {
+  position: absolute; top: -9px; inset-inline-start: 14px;
+  background: var(--card); padding: 0 8px; font-size: .68rem;
+  color: var(--text-dim); font-weight: 700; letter-spacing: 1.5px;
+}
+.rag-flow-arrow { text-align: center; font-size: 1.4rem; color: var(--purple-2); line-height: 1; }
+.rag-chunk {
+  background: rgba(129,140,248,.1); border-inline-start: 3px solid var(--purple-1);
+  padding: 7px 11px; border-radius: 4px; margin: 5px 0; font-size: .86rem;
+}
+.rag-chunk.c2 { border-color: var(--pink); background: rgba(244,114,182,.1); }
+.rag-chunk.c3 { border-color: var(--green); background: rgba(52,211,153,.1); }
+.rag-vector-row { display: flex; align-items: center; gap: 10px; margin: 5px 0; font-size: .85rem; }
+.rag-vector-label { flex: 0 0 auto; font-weight: 600; color: var(--purple-2); min-width: 72px; font-size: .8rem; }
+.rag-vector {
+  font-family: ui-monospace, monospace; color: var(--yellow); font-size: .78rem;
+  background: rgba(251,191,36,.08); padding: 4px 8px; border-radius: 4px;
+  flex: 1; overflow-x: auto; white-space: nowrap;
+}
+.rag-sim-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: .85rem; }
+.rag-sim-label { flex: 0 0 70px; font-weight: 600; }
+.rag-sim-bar-bg {
+  flex: 1; height: 22px; background: var(--bg); border-radius: 4px;
+  overflow: hidden; border: 1px solid var(--border);
+}
+.rag-sim-bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--purple-1), var(--pink));
+  display: flex; align-items: center; padding: 0 8px; color: #fff;
+  font-weight: 600; font-size: .76rem; white-space: nowrap;
+}
+.rag-sim-row.top .rag-sim-bar-fill { background: linear-gradient(90deg, var(--green), #10b981); }
+.rag-query-bubble {
+  background: rgba(52,211,153,.1); border: 1px solid var(--green);
+  border-radius: 8px; padding: 10px 14px; font-size: .9rem;
+}
+.rag-prompt {
+  font-family: ui-monospace, monospace; font-size: .78rem; line-height: 1.6;
+  white-space: pre-wrap; background: #0b1220; padding: 12px;
+  border-radius: 4px; border-inline-start: 3px solid var(--purple-1);
+  color: var(--text);
+}
+.rag-answer {
+  background: rgba(52,211,153,.08); border: 1px solid var(--green);
+  border-radius: 8px; padding: 12px 14px; font-size: .9rem;
+}
+.rag-citation { color: var(--text-dim); font-size: .76rem; margin-top: 8px; }
+.rag-note { color: var(--text-dim); font-size: .78rem; margin-top: 8px; }
 
 /* Compare boxes */
 .compare-row { display: flex; gap: 16px; margin: 12px 0; flex-wrap: wrap; }
@@ -453,12 +497,18 @@ body {
       </div>
 
       <div id="rag-pipeline">
-        <div class="rag-step active" id="rag-s1"><div class="rag-icon">&#9986;</div><div class="rag-text" data-i18n="s5_chunk"><strong>Chunk</strong> — שוברים מסמכים לחתיכות (200-500 מילים)</div></div>
-        <div class="rag-step" id="rag-s2"><div class="rag-icon">&#128300;</div><div class="rag-text" data-i18n="s5_embed"><strong>Embed</strong> — כל חתיכה הופכת לוקטור (מספרים)</div></div>
-        <div class="rag-step" id="rag-s3"><div class="rag-icon">&#128451;</div><div class="rag-text" data-i18n="s5_store"><strong>Store</strong> — שומרים ב-Vector DB (כמו Pinecone, Weaviate)</div></div>
-        <div class="rag-step" id="rag-s4"><div class="rag-icon">&#128269;</div><div class="rag-text" data-i18n="s5_query"><strong>Query</strong> — שאלת המשתמש הופכת לוקטור</div></div>
-        <div class="rag-step" id="rag-s5"><div class="rag-icon">&#127919;</div><div class="rag-text" data-i18n="s5_retrieve"><strong>Retrieve</strong> — מוצאים 3-5 חתיכות הכי דומות (cosine similarity)</div></div>
-        <div class="rag-step" id="rag-s6"><div class="rag-icon">&#9889;</div><div class="rag-text" data-i18n="s5_generate"><strong>Generate</strong> — מזריקים ל-prompt + LLM עונה עם מקורות</div></div>
+        <div class="rag-panel">
+          <div class="rag-box">
+            <div class="rag-box-label" data-i18n="rag_before_lbl">BEFORE</div>
+            <div id="rag-before-content"></div>
+          </div>
+          <div class="rag-flow-arrow">&#8595;</div>
+          <div class="rag-box">
+            <div class="rag-box-label" data-i18n="rag_after_lbl">AFTER</div>
+            <div id="rag-after-content"></div>
+          </div>
+        </div>
+        <div id="rag-step-caption" class="callout"></div>
       </div>
     </div>
 
@@ -598,6 +648,8 @@ const T = {
     s5_title: 'RAG Pipeline',
     s5_scenario: '📄 <strong>תרחיש:</strong> יש לך 200 מסמכי policy של החברה. איך הChatbot שלך יענה על שאלות לגביהם?',
     s5_inter_label: 'אינטראקטיבי — Pipeline צעד אחר צעד',
+    rag_before_lbl: 'לפני',
+    rag_after_lbl: 'אחרי',
     s5_chunk: '<strong>Chunk</strong> — שוברים מסמכים לחתיכות (200-500 מילים)',
     s5_embed: '<strong>Embed</strong> — כל חתיכה הופכת לוקטור (מספרים)',
     s5_store: '<strong>Store</strong> — שומרים ב-Vector DB (כמו Pinecone, Weaviate)',
@@ -697,6 +749,8 @@ const T = {
     s5_title: 'RAG Pipeline',
     s5_scenario: '📄 <strong>Scenario:</strong> You have 200 company policy documents. How does your Chatbot answer questions about them?',
     s5_inter_label: 'Interactive — Pipeline Step by Step',
+    rag_before_lbl: 'BEFORE',
+    rag_after_lbl: 'AFTER',
     s5_chunk: '<strong>Chunk</strong> — Break documents into pieces (200-500 words)',
     s5_embed: '<strong>Embed</strong> — Each chunk becomes a vector (numbers)',
     s5_store: '<strong>Store</strong> — Save in Vector DB (e.g., Pinecone, Weaviate)',
@@ -739,6 +793,7 @@ function setLang(lang) {
   updateVIF();
   renderFEDataset(currentFEView);
   renderStackStep(currentStackStep);
+  renderRAGStep();
   renderRAGCompare(currentRAGCompare);
   renderQLora(currentQLora);
 }
@@ -925,11 +980,87 @@ function renderStackStep(n) {
 }
 
 // ===== RAG Pipeline =====
-function setRAGStep(n) {
-  document.querySelectorAll('#rag-steps .step-btn').forEach((b, i) => b.classList.toggle('active', i === n - 1));
-  for (let i = 1; i <= 6; i++) {
-    document.getElementById('rag-s' + i).classList.toggle('active', i <= n);
+let currentRAGStep = 1;
+
+const RAG_DATA = {
+  he: {
+    1: {
+      caption: '<strong>Chunk</strong> — שוברים מסמך ארוך לחתיכות קצרות (200-500 מילים) כדי שנוכל למצוא ולהזריק רק את הרלוונטי ל־LLM.',
+      before: '<div style="font-size:.88rem;line-height:1.65">📄 <b>נוהל זיהוי וחסימה של אביוזרים — abuser_policy.pdf</b><br>המערכת מפעילה מודל ML שמסמן שחקנים חשודים. כאשר שחקן מסומן, צוות הריסק סוקר את ההתראה תוך 24 שעות ובודק דפוסי משחק, הפקדות וחשבונות מקושרים. במקרים של ראיות חזקות החשבון נחסם, ההפקדות האחרונות מוקפאות והשחקן מקבל הודעה. הליך ערר זמין תוך 7 ימי עסקים.</div>',
+      after: '<div class="rag-chunk">🟣 <b>Chunk 1:</b> המערכת מפעילה מודל ML שמסמן שחקנים חשודים.</div><div class="rag-chunk c2">🟢 <b>Chunk 2:</b> כאשר שחקן מסומן, צוות הריסק סוקר את ההתראה תוך 24 שעות ובודק דפוסי משחק, הפקדות וחשבונות מקושרים.</div><div class="rag-chunk c3">🟡 <b>Chunk 3:</b> במקרים של ראיות חזקות החשבון נחסם, ההפקדות מוקפאות. הליך ערר זמין תוך 7 ימי עסקים.</div>'
+    },
+    2: {
+      caption: '<strong>Embed</strong> — כל חתיכה הופכת לוקטור (רשימת מספרים). שתי חתיכות עם משמעות דומה יקבלו וקטורים קרובים במרחב.',
+      before: '<div class="rag-chunk">🟣 <b>Chunk 1:</b> מודל ML מסמן שחקנים חשודים.</div><div class="rag-chunk c2">🟢 <b>Chunk 2:</b> צוות ריסק סוקר התראה תוך 24 שעות.</div><div class="rag-chunk c3">🟡 <b>Chunk 3:</b> חסימה + הקפאת הפקדות + ערר 7 ימים.</div>',
+      after: '<div class="rag-vector-row"><div class="rag-vector-label">🟣 Chunk 1</div><div class="rag-vector">[0.82, -0.31, 0.54, 0.09, -0.22, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟢 Chunk 2</div><div class="rag-vector">[0.41, 0.67, -0.18, 0.33, 0.51, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟡 Chunk 3</div><div class="rag-vector">[-0.15, 0.23, 0.71, -0.44, 0.08, ...]</div></div><div class="rag-note">* אורך טיפוסי: 768 או 1536 ממדים</div>'
+    },
+    3: {
+      caption: '<strong>Store</strong> — שומרים את כל הווקטורים + טקסט המקור ב־Vector DB (Pinecone / Weaviate / pgvector).',
+      before: '<div class="rag-vector-row"><div class="rag-vector-label">🟣 Chunk 1</div><div class="rag-vector">[0.82, -0.31, 0.54, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟢 Chunk 2</div><div class="rag-vector">[0.41, 0.67, -0.18, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟡 Chunk 3</div><div class="rag-vector">[-0.15, 0.23, 0.71, ...]</div></div>',
+      after: '<table class="data-table"><thead><tr><th>id</th><th>vector</th><th>text</th><th>source</th></tr></thead><tbody><tr><td>c1</td><td style="font-family:monospace;color:var(--yellow);font-size:.78rem">[0.82, -0.31, ...]</td><td style="font-size:.82rem">מודל ML מסמן...</td><td style="font-size:.78rem">policy.pdf · p.1</td></tr><tr><td>c2</td><td style="font-family:monospace;color:var(--yellow);font-size:.78rem">[0.41, 0.67, ...]</td><td style="font-size:.82rem">צוות ריסק סוקר...</td><td style="font-size:.78rem">policy.pdf · p.2</td></tr><tr><td>c3</td><td style="font-family:monospace;color:var(--yellow);font-size:.78rem">[-0.15, 0.23, ...]</td><td style="font-size:.82rem">חסימה + ערר...</td><td style="font-size:.78rem">policy.pdf · p.2</td></tr></tbody></table>'
+    },
+    4: {
+      caption: '<strong>Query</strong> — שאלת המשתמש עוברת באותו embedding model והופכת לוקטור — במרחב זהה לוקטורים של ה־chunks.',
+      before: '<div class="rag-query-bubble">💬 <b>שאלה מהמשתמש:</b><br>"מה קורה אם סימנו אותי כחשוד? כמה זמן לוקח לצוות לבדוק?"</div>',
+      after: '<div class="rag-query-bubble">💬 "מה קורה אם סימנו אותי כחשוד? כמה זמן לוקח לצוות לבדוק?"</div><div class="rag-flow-arrow" style="font-size:1.1rem;margin:8px 0">&#8595;</div><div class="rag-vector-row"><div class="rag-vector-label">Query vec</div><div class="rag-vector">[0.38, 0.71, -0.14, 0.29, 0.48, ...]</div></div>'
+    },
+    5: {
+      caption: '<strong>Retrieve</strong> — cosine similarity בין וקטור השאלה לכל וקטור ב־DB. בוחרים top-k (כאן k=2) הקרובים ביותר.',
+      before: '<div class="rag-vector-row"><div class="rag-vector-label">Query</div><div class="rag-vector">[0.38, 0.71, -0.14, ...]</div></div><div class="rag-note">מושווה מול כל chunk ב־DB:</div><div class="rag-vector-row"><div class="rag-vector-label">🟣 c1</div><div class="rag-vector">[0.82, -0.31, 0.54, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟢 c2</div><div class="rag-vector">[0.41, 0.67, -0.18, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟡 c3</div><div class="rag-vector">[-0.15, 0.23, 0.71, ...]</div></div>',
+      after: '<div class="rag-sim-row top"><div class="rag-sim-label">🟢 c2</div><div class="rag-sim-bar-bg"><div class="rag-sim-bar-fill" style="width:92%">0.92 &check;</div></div></div><div class="rag-sim-row top"><div class="rag-sim-label">🟡 c3</div><div class="rag-sim-bar-bg"><div class="rag-sim-bar-fill" style="width:78%">0.78 &check;</div></div></div><div class="rag-sim-row"><div class="rag-sim-label">🟣 c1</div><div class="rag-sim-bar-bg"><div class="rag-sim-bar-fill" style="width:45%">0.45</div></div></div><div class="rag-note">top-2 (c2, c3) נבחרים כהקשר ל־LLM</div>'
+    },
+    6: {
+      caption: '<strong>Generate</strong> — מזריקים את ה־chunks שנבחרו + השאלה ל־prompt. ה־LLM עונה רק על סמך ההקשר, עם ציטוטים.',
+      before: '<div class="rag-prompt">System: ענה רק לפי ההקשר. ציין מקור בסוגריים מרובעים.\n\nContext:\n[c2] צוות הריסק סוקר התראה תוך 24 שעות ובודק דפוסי משחק, הפקדות וחשבונות מקושרים.\n[c3] חסימה + הקפאת הפקדות + הליך ערר תוך 7 ימי עסקים.\n\nQuestion: מה קורה אם סימנו אותי כחשוד? כמה זמן לוקח?</div>',
+      after: '<div class="rag-answer">💬 <b>תשובת ה־LLM:</b><br>כשסומנת כחשוד, צוות הריסק סוקר את ההתראה <b>תוך 24 שעות</b> ובודק דפוסי משחק, הפקדות וחשבונות מקושרים [c2]. במקרים של ראיות חזקות החשבון נחסם וההפקדות מוקפאות, אך זמין לך <b>הליך ערר תוך 7 ימי עסקים</b> [c3].<div class="rag-citation">📎 מקורות: abuser_policy.pdf · [c2], [c3]</div></div>'
+    }
+  },
+  en: {
+    1: {
+      caption: '<strong>Chunk</strong> — split a long document into small pieces (200-500 words) so we can retrieve and inject only the relevant parts into the LLM.',
+      before: '<div style="font-size:.88rem;line-height:1.65">📄 <b>Abuser Detection & Blocking Policy — abuser_policy.pdf</b><br>The system runs an ML model that flags suspicious players. When a player is flagged, the risk team reviews the alert within 24 hours and checks play patterns, deposits, and linked accounts. With strong evidence the account is blocked, recent deposits are frozen, and the player is notified. An appeal process is available within 7 business days.</div>',
+      after: '<div class="rag-chunk">🟣 <b>Chunk 1:</b> The system runs an ML model that flags suspicious players.</div><div class="rag-chunk c2">🟢 <b>Chunk 2:</b> When a player is flagged, the risk team reviews the alert within 24 hours and checks play patterns, deposits, and linked accounts.</div><div class="rag-chunk c3">🟡 <b>Chunk 3:</b> With strong evidence the account is blocked, deposits frozen. Appeal available within 7 business days.</div>'
+    },
+    2: {
+      caption: '<strong>Embed</strong> — each chunk becomes a vector (list of numbers). Two chunks with similar meaning get vectors close to each other in space.',
+      before: '<div class="rag-chunk">🟣 <b>Chunk 1:</b> ML model flags suspicious players.</div><div class="rag-chunk c2">🟢 <b>Chunk 2:</b> Risk team reviews alert within 24 hours.</div><div class="rag-chunk c3">🟡 <b>Chunk 3:</b> Block + freeze + 7-day appeal.</div>',
+      after: '<div class="rag-vector-row"><div class="rag-vector-label">🟣 Chunk 1</div><div class="rag-vector">[0.82, -0.31, 0.54, 0.09, -0.22, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟢 Chunk 2</div><div class="rag-vector">[0.41, 0.67, -0.18, 0.33, 0.51, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟡 Chunk 3</div><div class="rag-vector">[-0.15, 0.23, 0.71, -0.44, 0.08, ...]</div></div><div class="rag-note">* typical length: 768 or 1536 dimensions</div>'
+    },
+    3: {
+      caption: '<strong>Store</strong> — save all vectors + source text in a Vector DB (Pinecone / Weaviate / pgvector).',
+      before: '<div class="rag-vector-row"><div class="rag-vector-label">🟣 Chunk 1</div><div class="rag-vector">[0.82, -0.31, 0.54, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟢 Chunk 2</div><div class="rag-vector">[0.41, 0.67, -0.18, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟡 Chunk 3</div><div class="rag-vector">[-0.15, 0.23, 0.71, ...]</div></div>',
+      after: '<table class="data-table"><thead><tr><th>id</th><th>vector</th><th>text</th><th>source</th></tr></thead><tbody><tr><td>c1</td><td style="font-family:monospace;color:var(--yellow);font-size:.78rem">[0.82, -0.31, ...]</td><td style="font-size:.82rem">ML model flags...</td><td style="font-size:.78rem">policy.pdf · p.1</td></tr><tr><td>c2</td><td style="font-family:monospace;color:var(--yellow);font-size:.78rem">[0.41, 0.67, ...]</td><td style="font-size:.82rem">Risk team reviews...</td><td style="font-size:.78rem">policy.pdf · p.2</td></tr><tr><td>c3</td><td style="font-family:monospace;color:var(--yellow);font-size:.78rem">[-0.15, 0.23, ...]</td><td style="font-size:.82rem">Block + appeal...</td><td style="font-size:.78rem">policy.pdf · p.2</td></tr></tbody></table>'
+    },
+    4: {
+      caption: '<strong>Query</strong> — the user question goes through the same embedding model and becomes a vector — in the same space as the chunk vectors.',
+      before: '<div class="rag-query-bubble">💬 <b>User question:</b><br>"What happens if I got flagged as suspicious? How long does the team take to review?"</div>',
+      after: '<div class="rag-query-bubble">💬 "What happens if I got flagged as suspicious? How long does the team take to review?"</div><div class="rag-flow-arrow" style="font-size:1.1rem;margin:8px 0">&#8595;</div><div class="rag-vector-row"><div class="rag-vector-label">Query vec</div><div class="rag-vector">[0.38, 0.71, -0.14, 0.29, 0.48, ...]</div></div>'
+    },
+    5: {
+      caption: '<strong>Retrieve</strong> — cosine similarity between the query vector and each vector in the DB. Pick top-k (here k=2) nearest.',
+      before: '<div class="rag-vector-row"><div class="rag-vector-label">Query</div><div class="rag-vector">[0.38, 0.71, -0.14, ...]</div></div><div class="rag-note">Compared against every chunk in the DB:</div><div class="rag-vector-row"><div class="rag-vector-label">🟣 c1</div><div class="rag-vector">[0.82, -0.31, 0.54, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟢 c2</div><div class="rag-vector">[0.41, 0.67, -0.18, ...]</div></div><div class="rag-vector-row"><div class="rag-vector-label">🟡 c3</div><div class="rag-vector">[-0.15, 0.23, 0.71, ...]</div></div>',
+      after: '<div class="rag-sim-row top"><div class="rag-sim-label">🟢 c2</div><div class="rag-sim-bar-bg"><div class="rag-sim-bar-fill" style="width:92%">0.92 &check;</div></div></div><div class="rag-sim-row top"><div class="rag-sim-label">🟡 c3</div><div class="rag-sim-bar-bg"><div class="rag-sim-bar-fill" style="width:78%">0.78 &check;</div></div></div><div class="rag-sim-row"><div class="rag-sim-label">🟣 c1</div><div class="rag-sim-bar-bg"><div class="rag-sim-bar-fill" style="width:45%">0.45</div></div></div><div class="rag-note">top-2 (c2, c3) picked as context for the LLM</div>'
+    },
+    6: {
+      caption: '<strong>Generate</strong> — inject retrieved chunks + question into the prompt. The LLM answers only from the provided context, with citations.',
+      before: '<div class="rag-prompt">System: Answer only from the context. Cite sources in square brackets.\n\nContext:\n[c2] The risk team reviews the alert within 24 hours and checks play patterns, deposits, and linked accounts.\n[c3] Block + deposit freeze + appeal process within 7 business days.\n\nQuestion: What happens if I got flagged? How long does it take?</div>',
+      after: '<div class="rag-answer">💬 <b>LLM answer:</b><br>If you were flagged, the risk team reviews the alert <b>within 24 hours</b> and checks play patterns, deposits, and linked accounts [c2]. With strong evidence the account is blocked and deposits are frozen, but an <b>appeal is available within 7 business days</b> [c3].<div class="rag-citation">📎 Sources: abuser_policy.pdf · [c2], [c3]</div></div>'
+    }
   }
+};
+
+function setRAGStep(n) {
+  currentRAGStep = n;
+  document.querySelectorAll('#rag-steps .step-btn').forEach((b, i) => b.classList.toggle('active', i === n - 1));
+  renderRAGStep();
+}
+
+function renderRAGStep() {
+  const data = RAG_DATA[currentLang][currentRAGStep];
+  if (!data) return;
+  document.getElementById('rag-before-content').innerHTML = data.before;
+  document.getElementById('rag-after-content').innerHTML = data.after;
+  document.getElementById('rag-step-caption').innerHTML = data.caption;
 }
 
 let currentRAGCompare = 'with';
@@ -1011,6 +1142,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateVIF();
   renderFEDataset('raw');
   renderStackStep(1);
+  renderRAGStep();
   renderRAGCompare('with');
   renderQLora('full');
 });
