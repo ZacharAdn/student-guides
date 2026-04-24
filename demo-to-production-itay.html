@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo → Production — מפה אינטראקטיבית</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #f5f5f0;
+    color: #1f2937;
+    padding: 2rem 1.5rem;
+    min-height: 100vh;
+    line-height: 1.45;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  header h1 {
+    font-size: 2.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    direction: ltr;
+    color: #111827;
+  }
+  header .subtitle {
+    color: #6b7280;
+    font-size: 1.15rem;
+    margin-top: 0.35rem;
+  }
+  header .hint {
+    color: #92400e;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin: 1rem auto 2rem;
+    font-size: 0.85rem;
+    color: #4b5563;
+    flex-wrap: wrap;
+    max-width: 900px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .dot {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-done    { background: #10b981; }
+  .dot-partial { background: #f59e0b; }
+  .dot-todo    { background: #e5e7eb; border: 1px solid #9ca3af; }
+  .star { color: #eab308; font-weight: 700; font-size: 0.85rem; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    align-items: start;
+  }
+  .box {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem 1.15rem 1rem;
+    border-top: 4px solid var(--c);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+  }
+  .box[data-c="1"] { --c: #14b8a6; --c-bg: #f0fdfa; }
+  .box[data-c="2"] { --c: #f59e0b; --c-bg: #fffbeb; }
+  .box[data-c="3"] { --c: #ef4444; --c-bg: #fef2f2; }
+  .box[data-c="4"] { --c: #3b82f6; --c-bg: #eff6ff; }
+  .box[data-c="5"] { --c: #a855f7; --c-bg: #faf5ff; }
+  .box[data-c="6"] { --c: #22c55e; --c-bg: #f0fdf4; }
+  .box[data-c="7"] { --c: #f97316; --c-bg: #fff7ed; }
+
+  .box-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin-bottom: 0.35rem;
+    direction: ltr;
+  }
+  .box-num {
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 0.8rem;
+    color: var(--c);
+    font-weight: 700;
+  }
+  .box h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    direction: ltr;
+    color: #111827;
+  }
+  .box .desc {
+    color: #6b7280;
+    font-size: 0.85rem;
+    margin-bottom: 0.65rem;
+    line-height: 1.35;
+  }
+
+  /* Interactive item (details/summary) */
+  details.item {
+    border-top: 1px solid #f3f4f6;
+  }
+  details.item:first-of-type { border-top: none; }
+  details.item > summary {
+    padding: 0.45rem 0;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    direction: ltr;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: color 0.15s ease;
+  }
+  details.item > summary::-webkit-details-marker { display: none; }
+  details.item > summary::marker { content: none; }
+  details.item > summary:hover {
+    color: var(--c);
+  }
+  details.item > summary .label {
+    flex: 1;
+    text-align: left;
+    color: #374151;
+  }
+  details.item > summary .chev {
+    color: #9ca3af;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: transform 0.2s ease;
+    transform: rotate(0deg);
+    line-height: 1;
+  }
+  details.item[open] > summary .chev {
+    transform: rotate(90deg);
+    color: var(--c);
+  }
+  details.item[open] > summary .label {
+    color: #111827;
+    font-weight: 600;
+  }
+
+  .detail {
+    background: var(--c-bg);
+    border-right: 3px solid var(--c);
+    border-radius: 4px;
+    padding: 0.65rem 0.8rem;
+    margin: 0.25rem 0 0.5rem;
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: #1f2937;
+  }
+  .detail p {
+    margin: 0.25rem 0;
+  }
+  .detail strong {
+    color: var(--c);
+    font-weight: 700;
+  }
+  .detail code {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    background: rgba(0,0,0,0.05);
+    padding: 0.05rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.9em;
+    direction: ltr;
+    display: inline-block;
+  }
+
+  footer {
+    max-width: 760px;
+    margin: 2.5rem auto 0;
+    text-align: center;
+    padding: 1.1rem 1.5rem;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    color: #92400e;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+  footer strong { color: #78350f; }
+
+  @media (max-width: 1100px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    header h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Demo → Production</h1>
+  <p class="subtitle">7 ממדים שהופכים דמו למערכת חיה</p>
+  <p class="hint">לחץ על כל מושג להרחבה — הסבר + דוגמה מהאפליקציה שלך ›</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><span class="dot dot-done"></span>יש באפליקציה</div>
+  <div class="legend-item"><span class="dot dot-partial"></span>חלקי</div>
+  <div class="legend-item"><span class="dot dot-todo"></span>עוד לא</div>
+  <div class="legend-item"><span class="star">★</span>איתי סימן בצ'קליסט</div>
+</div>
+
+<main class="grid">
+
+  <!-- 01 Reliability -->
+  <section class="box" data-c="1">
+    <div class="box-head">
+      <span class="box-num">01</span>
+      <h2>Reliability</h2>
+    </div>
+    <p class="desc">ממשיך לעבוד גם כשדברים נופלים</p>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Idempotency</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> אותה פעולה פעמיים = אותה תוצאה, בלי side effects.</p>
+        <p><strong>באפליקציה שלך:</strong> <code>INSERT INTO predictions … ON CONFLICT (user_id, game_id) DO UPDATE</code> — משתמש לוחץ פעמיים, לא נוצרות שתי שורות.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Retry + Timeout</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> לנסות שוב כשקריאה נכשלת, ולוותר אחרי N שניות.</p>
+        <p><strong>באפליקציה שלך:</strong> Groq API תקוע 30 שניות — retry אחד, ואז נכנסים ל-<code>failed_summaries</code>. לא נתלים לנצח.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Rate Limiting <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> לחסום יותר מ-N קריאות בפרק זמן — גם לקוחות שלך וגם אתה מול APIs חיצוניים.</p>
+        <p><strong>באפליקציה שלך:</strong> Groq מגביל 30 req/min. אם ב-halftime אתה שולח 100 סיכומים במקביל, תקבל 429s. פתרון: queue + throttle.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-partial"></span><span class="label">Circuit Breaker <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> אחרי N כישלונות ברצף, לעצור קריאות ל-service ההוא ל-X דקות. מונע cascade failures.</p>
+        <p><strong>באפליקציה שלך:</strong> API-Football נפל — במקום להקיש אותו 100 פעם בדקה (ועולה כסף), לעצור ל-5 דק, אז לנסות שוב.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">Graceful Degradation</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> אם פיצ'ר לא-קריטי נופל, השאר ממשיך לעבוד.</p>
+        <p><strong>באפליקציה שלך:</strong> nightly-summary נכשל → ה-leaderboard עדיין מתעדכן. המשתמש רואה "סיכומים בדרך" במקום דף שגיאה.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- 02 Observability -->
+  <section class="box" data-c="2">
+    <div class="box-head">
+      <span class="box-num">02</span>
+      <h2>Observability</h2>
+    </div>
+    <p class="desc">יודעים מה קורה בפנים</p>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Logs (EF + DB)</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> טקסט מובנה שתיעד מה קרה מתי.</p>
+        <p><strong>באפליקציה שלך:</strong> <code>console.log</code> ב-Edge Functions + <code>pg_stat_statements</code> ב-Supabase. לחפש אחורה "מה קרה ב-3 בבוקר כשהסיכום נפל".</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Token tracking</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> ללוג את מספר הטוקנים של כל קריאת LLM.</p>
+        <p><strong>באפליקציה שלך:</strong> <code>input_tokens</code> ו-<code>output_tokens</code> ב-<code>ai_summaries</code>. מאפשר לחשב $ לסיכום, ליום, לקבוצה.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">Metrics dashboard <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> ויזואליזציה של מספרים מצטברים לאורך זמן.</p>
+        <p><strong>באפליקציה שלך:</strong> ה-SQL שלנו (cost/day, failures, runs) → דף admin באפליקציה או Grafana. רואים טרנדים, לא רק נקודות.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">Alerts</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> התראה אוטומטית כשמטריקה חורגת מרף.</p>
+        <p><strong>באפליקציה שלך:</strong> cron: <code>SELECT COUNT(*) FROM failed_summaries WHERE resolved=false</code> — אם &gt; 10, email אליך. יודע על בעיות לפני שמשתמשים מתלוננים.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">Error tracking (Sentry)</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> service שתופס exceptions ומצרף קונטקסט (user, url, stack trace, browser).</p>
+        <p><strong>באפליקציה שלך:</strong> React זורק ב-Picks page → Sentry מראה את השורה + הדפדפן + ה-state של הניחוש. מנצח <code>console.error</code>.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- 03 Security -->
+  <section class="box" data-c="3">
+    <div class="box-head">
+      <span class="box-num">03</span>
+      <h2>Security</h2>
+    </div>
+    <p class="desc">מגנים על דאטה וגישה</p>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Secrets (Vault) <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> אחסון מפתחות API מוצפן, נגיש רק בזמן ריצה.</p>
+        <p><strong>באפליקציה שלך:</strong> Groq API key + API-Football key ב-Supabase Vault, לא ב-<code>.env</code> שנכנס ל-git.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">HTTPS / SSL <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> הצפנת תעבורה בין דפדפן לשרת.</p>
+        <p><strong>באפליקציה שלך:</strong> GitHub Pages נותן HTTPS אוטומטית. בלי זה, מישהו על WiFi יכול לצותת ל-login tokens של המשתמשים.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Auth + RLS</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> אימות משתמש + אכיפת גבולות דאטה ברמת ה-DB עצמה.</p>
+        <p><strong>באפליקציה שלך:</strong> RLS policy <code>SELECT predictions WHERE user_id = auth.uid()</code> — משתמש א' לא יכול לראות ניחושים של משתמש ב', גם אם יעקוף את ה-frontend.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-partial"></span><span class="label">JWT <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> token חתום שמוכיח "המשתמש מאומת" בלי לגשת ל-DB בכל בקשה.</p>
+        <p><strong>באפליקציה שלך:</strong> Supabase מנפיק JWT ב-login; frontend שולח בכל request header; EF מאמת את החתימה מקומית (מהיר).</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-partial"></span><span class="label">Zero-Trust <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> להניח שכל בקשה עוינת, לאמת בכל שכבה. לא "סומכים כי זה פנימי".</p>
+        <p><strong>באפליקציה שלך:</strong> EF לא סומך על <code>user_id</code> ב-request body — גוזר אותו מחדש מה-JWT ובודק RLS.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- 04 Deployability -->
+  <section class="box" data-c="4">
+    <div class="box-head">
+      <span class="box-num">04</span>
+      <h2>Deployability</h2>
+    </div>
+    <p class="desc">מעלים ומחזירים בלי דרמה</p>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Migrations</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> שינויי schema versioned — כל שינוי ב-DB הוא קובץ SQL.</p>
+        <p><strong>באפליקציה שלך:</strong> 56 migrations. אם תפוצץ את ה-prod, אפשר להריץ אותן על DB חדש ולחזור למצב תקין.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-partial"></span><span class="label">Branches + PRs</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> לבודד פיצ'ר ב-branch, לסקור לפני merge.</p>
+        <p><strong>באפליקציה שלך:</strong> <code>feature/nightly-summary</code> — מפתחים, push, PR, review, merge ל-main. main נשאר נקי. (המקום היחיד שעוד לא מושלם אחרי incident הauto-merge של Cursor.)</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">CI/CD <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> pipeline אוטומטי: push → tests → deploy.</p>
+        <p><strong>באפליקציה שלך:</strong> GitHub Actions על push ל-main → מריץ tests → deploy ל-GitHub Pages. אתה רק pusher; deploy קורה לבד.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">Docker <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> אריזת app + כל התלויות שלו ב-container שרץ בכל מקום.</p>
+        <p><strong>באפליקציה שלך:</strong> לא קריטי — GitHub Pages + Supabase = serverless. ירלוונטי אם תארח בעצמך או תצטרך reproducibility של dev env.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">ADR <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> Architecture Decision Record — מסמך קצר שמסביר "למה בחרנו X על פני Y".</p>
+        <p><strong>באפליקציה שלך:</strong> "למה Groq ולא OpenAI?" — latency, cost, format. "You-עתידי" קורא ולא מבטל את ההחלטה בטעות.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- 05 Scalability -->
+  <section class="box" data-c="5">
+    <div class="box-head">
+      <span class="box-num">05</span>
+      <h2>Scalability</h2>
+    </div>
+    <p class="desc">מחזיק עומס וגדילה</p>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">CDN <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> Content Delivery Network — עותקים של קבצים סטטיים במספר מיקומים גיאוגרפיים. משתמש מקבל מהקרוב.</p>
+        <p><strong>באפליקציה שלך:</strong> GitHub Pages משתמש ב-Fastly CDN. משתמש בתל אביב טוען מ-edge תל אביב, לא מ-HQ של GitHub.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Connection pool</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> שימוש חוזר ב-DB connections במקום לפתוח אחד לכל request.</p>
+        <p><strong>באפליקציה שלך:</strong> Supabase PgBouncer — 1000 משתמשים סימולטניים לא צריכים 1000 connections פתוחים; pool מנהל ~20.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-partial"></span><span class="label">DB Indexing <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> data structure שהופך queries ל-O(log n) במקום O(n).</p>
+        <p><strong>באפליקציה שלך:</strong> index על <code>predictions(game_id)</code> — "כל הניחושים למשחק X" — DB קופץ ישר, לא סורק 10,000 שורות.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-partial"></span><span class="label">Query optimization</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> להאיץ SQL — joins חכמים, projections, הימנעות מ-N+1.</p>
+        <p><strong>באפליקציה שלך:</strong> יש לך <code>SELECT group_id FROM predictions WHERE user_id=X</code> בלולאה = N+1. תיקון: JOIN אחד במקום.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">Caching</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> שמירת תוצאות חישוב יקר, החזרת עותק על פנייה חוזרת.</p>
+        <p><strong>באפליקציה שלך:</strong> leaderboard מחושב מחדש בכל page load → cache ב-Redis או materialized view ל-30 שניות, חישוב מחדש אחרי.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- 06 Durability -->
+  <section class="box" data-c="6">
+    <div class="box-head">
+      <span class="box-num">06</span>
+      <h2>Durability</h2>
+    </div>
+    <p class="desc">דאטה שורד אסונות</p>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Backups (Supabase) <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> snapshots אוטומטיים של ה-DB, נשמרים N ימים.</p>
+        <p><strong>באפליקציה שלך:</strong> Supabase PITR (Point-in-Time Recovery) — 7 ימים ב-free tier. אם הפלת טבלה בטעות, תוכל לשחזר.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Replication</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> עותק של DB מתעדכן בזמן אמת. failover אם ה-primary נופל.</p>
+        <p><strong>באפליקציה שלך:</strong> Supabase מריץ replicas ברקע. גם אם primary קורס, replica קופץ פנימה.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">DR plan</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> Disaster Recovery — מסמך כתוב: "אם DB נופל, עושים X, Y, Z".</p>
+        <p><strong>באפליקציה שלך:</strong> "שחזר backup + עדכן Supabase URL בכל ה-EFs + הודע למשתמשים". אין לך כזה עדיין — כדאי לרשום 5 שורות לפני המונדיאל.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">Data retention</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> כללים מה שומרים ומה מוחקים, ולכמה זמן.</p>
+        <p><strong>באפליקציה שלך:</strong> "ניחושים — 2 שנים; auth logs — 90 יום". חלק מזה legal (GDPR), חלק עלויות אחסון.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">DNS failover <span class="star">★</span></span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> אם שרת נופל, DNS מפנה משתמשים לשרת backup.</p>
+        <p><strong>באפליקציה שלך:</strong> לא קריטי — GitHub Pages CDN מטפל. ירלוונטי רק אם תארח שרת בעצמך.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- 07 Cost & Governance -->
+  <section class="box" data-c="7">
+    <div class="box-head">
+      <span class="box-num">07</span>
+      <h2>Cost & Governance</h2>
+    </div>
+    <p class="desc">בר קיימא וחוקי</p>
+
+    <details class="item">
+      <summary><span class="dot dot-done"></span><span class="label">Token cost tracking</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> לרשום כמה עלתה כל קריאת LLM.</p>
+        <p><strong>באפליקציה שלך:</strong> <code>input_tokens * 0.00015 + output_tokens * 0.0006</code> לכל שורה — יודע עלות יומית, חודשית, ולכל קבוצה.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">Budget alerts</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> התראה כשההוצאה חורגת מרף.</p>
+        <p><strong>באפליקציה שלך:</strong> cron: <code>SUM(cost) last 7 days</code> — אם &gt; $50, email. מונע runaway costs (פרומפט תקוע בלולאה).</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">Cost per user</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> unit economics — כמה עולה לך משתמש לחודש?</p>
+        <p><strong>באפליקציה שלך:</strong> (Supabase $20 + LLM costs) / MAU. נניח $0.20/user. קריטי אם תרצה לגבות פעם.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">Privacy / ToS</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> דפי Terms of Service ו-Privacy Policy.</p>
+        <p><strong>באפליקציה שלך:</strong> חייב לציין מה אוסף (email, ניחושים), איך משתמש, עם מי משתף (Groq רואה דאטה משחקים). GDPR fine בלי.</p>
+      </div>
+    </details>
+
+    <details class="item">
+      <summary><span class="dot dot-todo"></span><span class="label">Compliance</span><span class="chev">›</span></summary>
+      <div class="detail">
+        <p><strong>מה זה:</strong> חוקים רגולטוריים (GDPR ל-EU, PCI לתשלומים).</p>
+        <p><strong>באפליקציה שלך:</strong> משתמשים ב-EU → GDPR → חייב לאפשר מחיקת דאטה על בקשה. לא בעיה ברצינות עד 100 משתמשים.</p>
+      </div>
+    </details>
+  </section>
+
+</main>
+
+<footer>
+  <strong>זאת מפה, לא תפריט.</strong><br>
+  לחץ על כל מושג כדי לראות הסבר קצר ודוגמה קונקרטית מהאפליקציה שלך.<br>
+  במפגש הבא: נעבור ביחד על הסימונים ונבחר מה חייב לפני מונדיאל ומה אחרי.
+</footer>
+
+</body>
+</html>
