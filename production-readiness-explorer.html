@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production Readiness Explorer — Demo to Production</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;min-height:100vh}
+
+/* Language Toggle */
+.lang-toggle{position:fixed;top:1.2rem;right:1.5rem;z-index:1000;display:flex;background:rgba(30,41,59,0.95);backdrop-filter:blur(12px);border-radius:12px;border:1px solid #334155;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+[dir="rtl"] .lang-toggle{right:1.5rem;left:auto}
+[dir="ltr"] .lang-toggle{right:1.5rem;left:auto}
+.lang-btn{background:none;border:none;color:#94a3b8;padding:0.6rem 1rem;cursor:pointer;font-size:0.9rem;transition:all 0.2s;font-weight:600}
+.lang-btn.active{color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.lang-btn:hover:not(.active){color:#cbd5e1}
+
+/* Section layout */
+section{max-width:1100px;margin:0 auto;padding:2.5rem 1.5rem}
+.hero{text-align:center;padding:4rem 1.5rem 1.5rem;max-width:1100px;margin:0 auto}
+.hero h1{font-size:2.8rem;background:linear-gradient(135deg,#818cf8,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.6rem;font-weight:800;letter-spacing:-0.02em}
+.hero p{color:#94a3b8;font-size:1.1rem;max-width:720px;margin:0 auto 0.4rem}
+.hero .hint{color:#c084fc;font-size:0.95rem;margin-top:0.7rem;font-style:italic}
+
+/* Generic card */
+.card{background:#1e293b;border-radius:16px;padding:2rem;margin:1.5rem 0;border:1px solid #334155;box-shadow:0 4px 24px rgba(0,0,0,0.3)}
+h2{color:#c084fc;font-size:1.7rem;margin-bottom:0.8rem;font-weight:700}
+h3{color:#f472b6;font-size:1.2rem;margin-bottom:0.8rem;font-weight:700}
+
+/* Legend */
+.legend{display:flex;justify-content:center;gap:1.25rem;flex-wrap:wrap;margin:0.75rem auto 0;font-size:0.85rem;color:#94a3b8;background:rgba(30,41,59,0.6);border:1px solid #334155;border-radius:12px;padding:0.7rem 1.1rem;max-width:760px}
+.legend-item{display:flex;align-items:center;gap:0.45rem}
+.dot{display:inline-block;width:0.75rem;height:0.75rem;border-radius:50%;flex-shrink:0}
+.dot-done{background:#22c55e}
+.dot-partial{background:#f59e0b}
+.dot-todo{background:#475569;border:1px solid #64748b}
+.star{color:#fbbf24;font-weight:800;font-size:0.95rem;letter-spacing:-0.05em}
+
+/* Interactive explorer section */
+.explorer{background:linear-gradient(135deg,rgba(129,140,248,0.08),rgba(244,114,182,0.08));border:1px solid #334155;border-radius:20px;padding:2rem 1.8rem;margin:1.5rem 0}
+.score-wrap{display:grid;grid-template-columns:auto 1fr;gap:2rem;align-items:center;margin-bottom:1.8rem}
+.score-gauge{width:180px;height:180px;position:relative;flex-shrink:0}
+.score-gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
+.score-gauge .ring-bg{fill:none;stroke:#334155;stroke-width:14}
+.score-gauge .ring-fill{fill:none;stroke:url(#gaugeGrad);stroke-width:14;stroke-linecap:round;transition:stroke-dashoffset 0.6s ease}
+.score-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.score-text .num{font-size:2.6rem;font-weight:800;background:linear-gradient(135deg,#818cf8,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.score-text .pct{font-size:1rem;color:#94a3b8;margin-top:0.1rem}
+.score-text .lbl{font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:0.08em;margin-top:0.4rem}
+.score-info{flex:1;min-width:0}
+.score-info .title{font-size:1.3rem;color:#e2e8f0;font-weight:700;margin-bottom:0.3rem}
+.score-info .subtitle{color:#94a3b8;font-size:0.95rem;margin-bottom:0.8rem}
+.score-counts{display:flex;gap:1rem;flex-wrap:wrap;font-size:0.85rem;color:#cbd5e1}
+.score-counts span{display:inline-flex;align-items:center;gap:0.35rem}
+
+/* Dimension bars */
+.bars{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem 1.4rem;margin-top:0.5rem}
+.bar-row{display:grid;grid-template-columns:140px 1fr 50px;gap:0.6rem;align-items:center;font-size:0.85rem}
+.bar-label{color:#cbd5e1;font-weight:600}
+.bar-label .num{color:#818cf8;font-family:'SF Mono',Menlo,monospace;font-size:0.78rem;margin-right:0.35rem}
+[dir="rtl"] .bar-label .num{margin-right:0;margin-left:0.35rem}
+.bar-track{background:#0f172a;border:1px solid #334155;border-radius:999px;height:10px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:999px;transition:width 0.5s ease}
+.bar-fill[data-c="1"]{background:linear-gradient(90deg,#14b8a6,#5eead4)}
+.bar-fill[data-c="2"]{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.bar-fill[data-c="3"]{background:linear-gradient(90deg,#ef4444,#f87171)}
+.bar-fill[data-c="4"]{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.bar-fill[data-c="5"]{background:linear-gradient(90deg,#a855f7,#c084fc)}
+.bar-fill[data-c="6"]{background:linear-gradient(90deg,#22c55e,#4ade80)}
+.bar-fill[data-c="7"]{background:linear-gradient(90deg,#f97316,#fb923c)}
+.bar-pct{color:#cbd5e1;font-family:'SF Mono',Menlo,monospace;font-size:0.82rem;text-align:right;font-weight:600}
+[dir="rtl"] .bar-pct{text-align:left}
+
+/* Explorer controls */
+.explorer-actions{display:flex;gap:0.7rem;flex-wrap:wrap;margin:1.5rem 0 0.5rem;justify-content:center}
+.btn{border:none;border-radius:10px;padding:0.6rem 1.15rem;font-weight:600;font-size:0.88rem;cursor:pointer;transition:all 0.2s;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff}
+.btn-primary:hover{transform:scale(1.04);box-shadow:0 0 20px rgba(99,102,241,0.35)}
+.btn-secondary{background:#334155;color:#e2e8f0}
+.btn-secondary:hover{background:#475569}
+.btn-ghost{background:rgba(30,41,59,0.6);color:#cbd5e1;border:1px solid #334155}
+.btn-ghost:hover{background:#1e293b;border-color:#475569}
+
+/* 7-dimension grid */
+.dim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.1rem;margin-top:1.5rem}
+.dim-card{background:#1e293b;border-radius:14px;border:1px solid #334155;border-top:4px solid var(--cc);padding:1.2rem 1.3rem;display:flex;flex-direction:column}
+.dim-card[data-c="1"]{--cc:#14b8a6;--cc-bg:rgba(20,184,166,0.08)}
+.dim-card[data-c="2"]{--cc:#f59e0b;--cc-bg:rgba(245,158,11,0.08)}
+.dim-card[data-c="3"]{--cc:#ef4444;--cc-bg:rgba(239,68,68,0.08)}
+.dim-card[data-c="4"]{--cc:#3b82f6;--cc-bg:rgba(59,130,246,0.08)}
+.dim-card[data-c="5"]{--cc:#a855f7;--cc-bg:rgba(168,85,247,0.08)}
+.dim-card[data-c="6"]{--cc:#22c55e;--cc-bg:rgba(34,197,94,0.08)}
+.dim-card[data-c="7"]{--cc:#f97316;--cc-bg:rgba(249,115,22,0.08)}
+.dim-head{display:flex;align-items:baseline;gap:0.5rem;margin-bottom:0.2rem}
+.dim-num{font-family:'SF Mono',Menlo,monospace;font-size:0.78rem;color:var(--cc);font-weight:800}
+.dim-card h3{color:var(--cc);font-size:1.15rem;font-weight:700;margin-bottom:0}
+.dim-desc{color:#94a3b8;font-size:0.85rem;margin-bottom:0.8rem;min-height:2.4em}
+.dim-progress{font-size:0.78rem;color:#64748b;margin-bottom:0.6rem;font-family:'SF Mono',Menlo,monospace}
+.dim-progress .big{color:var(--cc);font-weight:700;font-size:0.92rem}
+
+/* Concept item */
+.concepts{display:flex;flex-direction:column;gap:0.25rem}
+.concept{border-top:1px solid #283445}
+.concept:first-child{border-top:none}
+.concept-head{width:100%;background:none;border:none;color:inherit;display:flex;align-items:center;gap:0.55rem;padding:0.55rem 0.2rem;cursor:pointer;font-family:inherit;font-size:0.88rem;text-align:left;font-weight:500;transition:color 0.15s;user-select:none}
+[dir="rtl"] .concept-head{text-align:right}
+.concept-head:hover{color:var(--cc)}
+.concept-head:focus-visible{outline:2px solid var(--cc);outline-offset:2px;border-radius:6px}
+.concept-head .status-btn{border:1px solid #334155;background:#0f172a;color:#cbd5e1;border-radius:6px;padding:0.15rem 0.5rem;font-size:0.7rem;font-weight:700;cursor:pointer;min-width:58px;text-align:center;transition:all 0.15s;font-family:inherit}
+.concept-head .status-btn:hover{border-color:#64748b}
+.concept-head .status-btn[data-s="done"]{background:rgba(34,197,94,0.12);color:#4ade80;border-color:rgba(34,197,94,0.35)}
+.concept-head .status-btn[data-s="partial"]{background:rgba(245,158,11,0.12);color:#fbbf24;border-color:rgba(245,158,11,0.35)}
+.concept-head .status-btn[data-s="todo"]{background:rgba(71,85,105,0.35);color:#94a3b8;border-color:#475569}
+.concept-label{flex:1;min-width:0;color:#e2e8f0}
+.concept .chev{color:#64748b;font-size:1rem;line-height:1;transition:transform 0.2s}
+.concept.open .chev{transform:rotate(90deg);color:var(--cc)}
+[dir="rtl"] .concept .chev{transform:rotate(180deg)}
+[dir="rtl"] .concept.open .chev{transform:rotate(90deg)}
+.concept-body{display:none;background:var(--cc-bg);border-left:3px solid var(--cc);border-radius:6px;padding:0.7rem 0.85rem;margin:0.2rem 0 0.5rem;font-size:0.85rem;line-height:1.55;color:#cbd5e1}
+[dir="rtl"] .concept-body{border-left:none;border-right:3px solid var(--cc)}
+.concept.open .concept-body{display:block}
+.concept-body p{margin:0.3rem 0}
+.concept-body strong{color:var(--cc);font-weight:700}
+.concept-body code{font-family:'SF Mono',Menlo,Consolas,monospace;background:rgba(15,23,42,0.75);padding:0.05rem 0.35rem;border-radius:4px;font-size:0.88em;direction:ltr;display:inline-block;color:#e2e8f0}
+
+/* Takeaways */
+.takeaway{display:flex;gap:1rem;align-items:flex-start;padding:0.8rem 0;border-bottom:1px solid #283445}
+.takeaway:last-child{border-bottom:none}
+.takeaway-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;color:#fff}
+.takeaway-text{color:#cbd5e1;font-size:0.95rem}
+.takeaway-text strong{color:#e2e8f0}
+
+/* Footer */
+footer{max-width:900px;margin:2rem auto 3rem;text-align:center;padding:1.2rem 1.5rem;background:rgba(192,132,252,0.06);border:1px solid rgba(192,132,252,0.25);border-radius:14px;color:#cbd5e1;font-size:0.93rem;line-height:1.55}
+footer strong{color:#c084fc}
+
+/* Responsive */
+@media(max-width:768px){
+  .hero{padding:3.5rem 1rem 1rem}
+  .hero h1{font-size:2.1rem}
+  section{padding:1.5rem 1rem}
+  .explorer{padding:1.5rem 1.1rem}
+  .score-wrap{grid-template-columns:1fr;gap:1rem;text-align:center}
+  .score-gauge{margin:0 auto}
+  .score-counts{justify-content:center}
+  .bars{grid-template-columns:1fr}
+  .bar-row{grid-template-columns:110px 1fr 44px;font-size:0.78rem}
+  .dim-grid{grid-template-columns:1fr}
+  .lang-toggle{top:0.8rem;right:0.8rem}
+  [dir="ltr"] .lang-toggle{left:auto;right:0.8rem}
+  [dir="rtl"] .lang-toggle{right:0.8rem;left:auto}
+  .lang-btn{padding:0.5rem 0.8rem;font-size:0.8rem}
+}
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" id="btn-he" onclick="setLang('he')">HE</button>
+</div>
+
+<div class="hero">
+  <h1 data-i18n="hero_title">Demo to Production</h1>
+  <p data-i18n="hero_subtitle">7 dimensions that turn a demo into a living system — explore your readiness live.</p>
+  <p class="hint" data-i18n="hero_hint">Flip any toggle to see the score move. Click a concept name for the explanation.</p>
+  <div class="legend" style="margin-top:1.2rem">
+    <div class="legend-item"><span class="dot dot-done"></span><span data-i18n="legend_done">Shipped</span></div>
+    <div class="legend-item"><span class="dot dot-partial"></span><span data-i18n="legend_partial">Partial</span></div>
+    <div class="legend-item"><span class="dot dot-todo"></span><span data-i18n="legend_todo">Not yet</span></div>
+    <div class="legend-item"><span class="star">&#9733;</span><span data-i18n="legend_star">Flagged in your checklist</span></div>
+  </div>
+</div>
+
+<!-- Interactive Explorer (the centerpiece) -->
+<section>
+  <div class="card explorer">
+    <div class="score-wrap">
+      <div class="score-gauge" aria-hidden="true">
+        <svg viewBox="0 0 180 180" role="presentation">
+          <defs>
+            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#818cf8"/>
+              <stop offset="50%" stop-color="#c084fc"/>
+              <stop offset="100%" stop-color="#f472b6"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="90" cy="90" r="76"></circle>
+          <circle class="ring-fill" id="gaugeRing" cx="90" cy="90" r="76" stroke-dasharray="477.5" stroke-dashoffset="477.5"></circle>
+        </svg>
+        <div class="score-text">
+          <div class="num" id="scoreNum">0</div>
+          <div class="pct">%</div>
+          <div class="lbl" data-i18n="score_label">readiness</div>
+        </div>
+      </div>
+      <div class="score-info">
+        <div class="title" data-i18n="score_title">Production Readiness</div>
+        <div class="subtitle" data-i18n="score_subtitle">Each Done = 1.0, each Partial = 0.5, each Todo = 0. Averaged across 35 concepts.</div>
+        <div class="score-counts">
+          <span><span class="dot dot-done"></span><span id="countDone">0</span> <span data-i18n="count_done">done</span></span>
+          <span><span class="dot dot-partial"></span><span id="countPartial">0</span> <span data-i18n="count_partial">partial</span></span>
+          <span><span class="dot dot-todo"></span><span id="countTodo">0</span> <span data-i18n="count_todo">todo</span></span>
+        </div>
+      </div>
+    </div>
+
+    <h3 data-i18n="bars_title">Per-dimension readiness</h3>
+    <div class="bars" id="dimBars"></div>
+
+    <div class="explorer-actions">
+      <button class="btn btn-primary" id="btnReset" onclick="resetToInitial()" data-i18n="btn_reset">Reset to current state</button>
+      <button class="btn btn-secondary" id="btnAllDone" onclick="setAll('done')" data-i18n="btn_all_done">Mark all done (what-if)</button>
+      <button class="btn btn-ghost" id="btnAllTodo" onclick="setAll('todo')" data-i18n="btn_all_todo">Clear all</button>
+    </div>
+  </div>
+</section>
+
+<!-- 7-Dimension Grid -->
+<section>
+  <h2 data-i18n="grid_title">The 7 Dimensions</h2>
+  <p style="color:#94a3b8;margin-bottom:0.5rem" data-i18n="grid_intro">Click a concept name for the explanation and an example from your app. Click a status badge (Done / Partial / Todo) to cycle it — both gauges above update live.</p>
+  <div class="dim-grid" id="dimGrid"></div>
+</section>
+
+<!-- Key Takeaways -->
+<section>
+  <div class="card">
+    <h2 data-i18n="takeaways_title">Key Takeaways</h2>
+    <div class="takeaway">
+      <div class="takeaway-num">1</div>
+      <div class="takeaway-text" data-i18n="tk1"><strong>Demo and Production are different sports.</strong> A demo only has to work once, on a happy path. Production has to keep working under failure, load, breaches, and boring Tuesday mornings.</div>
+    </div>
+    <div class="takeaway">
+      <div class="takeaway-num">2</div>
+      <div class="takeaway-text" data-i18n="tk2"><strong>Seven dimensions, not a checklist.</strong> Reliability, Observability, Security, Deployability, Scalability, Durability, Cost & Governance. Each one is a separate muscle — fix the weakest first.</div>
+    </div>
+    <div class="takeaway">
+      <div class="takeaway-num">3</div>
+      <div class="takeaway-text" data-i18n="tk3"><strong>You're already strong on Reliability and Security.</strong> Your soft spots before the World Cup are Observability (metrics/alerts/Sentry) and Cost governance. Those are what'll bite you at 2 AM.</div>
+    </div>
+    <div class="takeaway">
+      <div class="takeaway-num">4</div>
+      <div class="takeaway-text" data-i18n="tk4"><strong>Not everything must ship before launch.</strong> Use the toggles as a prioritisation tool: if a "what-if all done" score jump comes cheap, do it first. If expensive (Docker, full CI/CD), park it for post-launch.</div>
+    </div>
+    <div class="takeaway">
+      <div class="takeaway-num">5</div>
+      <div class="takeaway-text" data-i18n="tk5"><strong>Write the 5-line DR plan now.</strong> Backups exist, but "what we do when they're needed" does not. Five lines in a README beats a perfect plan you never write.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong data-i18n="footer_strong">This is a map, not a menu.</strong>
+  <span data-i18n="footer_text"> Use the toggles to simulate what-if scenarios before the World Cup. Next meeting we'll pick together what must ship before launch and what can wait.</span>
+</footer>
+
+<script>
+/* ====== Data: 7 dimensions × 35 concepts ====== */
+const DIMENSIONS = [
+  {
+    id: 1, key:'dim_reliability',
+    name: { en: 'Reliability', he: 'Reliability' },
+    desc: { en: 'Keeps working when things break', he: 'ממשיך לעבוד גם כשדברים נופלים' },
+    items: [
+      {
+        id:'r_idem', status:'done', star:false,
+        name:{en:'Idempotency', he:'Idempotency'},
+        what:{en:'<strong>What it is:</strong> Running the same operation twice yields the same result, with no side effects.',
+              he:'<strong>מה זה:</strong> אותה פעולה פעמיים = אותה תוצאה, בלי side effects.'},
+        app:{en:'<strong>In your app:</strong> <code>INSERT INTO predictions … ON CONFLICT (user_id, game_id) DO UPDATE</code> — a user double-clicks and you get one row, not two.',
+             he:'<strong>באפליקציה שלך:</strong> <code>INSERT INTO predictions … ON CONFLICT (user_id, game_id) DO UPDATE</code> — משתמש לוחץ פעמיים, לא נוצרות שתי שורות.'}
+      },
+      {
+        id:'r_retry', status:'done', star:false,
+        name:{en:'Retry + Timeout', he:'Retry + Timeout'},
+        what:{en:'<strong>What it is:</strong> Retry failed calls, give up after N seconds.',
+              he:'<strong>מה זה:</strong> לנסות שוב כשקריאה נכשלת, ולוותר אחרי N שניות.'},
+        app:{en:'<strong>In your app:</strong> Groq API hangs for 30 s — one retry, then the row moves to <code>failed_summaries</code>. No infinite wait.',
+             he:'<strong>באפליקציה שלך:</strong> Groq API תקוע 30 שניות — retry אחד, ואז נכנסים ל-<code>failed_summaries</code>. לא נתלים לנצח.'}
+      },
+      {
+        id:'r_rate', status:'done', star:true,
+        name:{en:'Rate Limiting', he:'Rate Limiting'},
+        what:{en:'<strong>What it is:</strong> Cap calls per time window — both your users hitting you, and you hitting external APIs.',
+              he:'<strong>מה זה:</strong> לחסום יותר מ-N קריאות בפרק זמן — גם לקוחות שלך וגם אתה מול APIs חיצוניים.'},
+        app:{en:'<strong>In your app:</strong> Groq caps at 30 req/min. If halftime fires 100 summaries in parallel you get 429s. Fix: queue + throttle.',
+             he:'<strong>באפליקציה שלך:</strong> Groq מגביל 30 req/min. אם ב-halftime אתה שולח 100 סיכומים במקביל, תקבל 429s. פתרון: queue + throttle.'}
+      },
+      {
+        id:'r_cb', status:'partial', star:true,
+        name:{en:'Circuit Breaker', he:'Circuit Breaker'},
+        what:{en:'<strong>What it is:</strong> After N consecutive failures, stop calling that service for X minutes. Prevents cascade failures.',
+              he:'<strong>מה זה:</strong> אחרי N כישלונות ברצף, לעצור קריאות ל-service ההוא ל-X דקות. מונע cascade failures.'},
+        app:{en:'<strong>In your app:</strong> API-Football is down — instead of hammering it 100x/minute (and paying for it), pause 5 min, then retry.',
+             he:'<strong>באפליקציה שלך:</strong> API-Football נפל — במקום להקיש אותו 100 פעם בדקה (ועולה כסף), לעצור ל-5 דק, אז לנסות שוב.'}
+      },
+      {
+        id:'r_graceful', status:'todo', star:false,
+        name:{en:'Graceful Degradation', he:'Graceful Degradation'},
+        what:{en:'<strong>What it is:</strong> If a non-critical feature dies, the rest keeps working.',
+              he:'<strong>מה זה:</strong> אם פיצ\'ר לא-קריטי נופל, השאר ממשיך לעבוד.'},
+        app:{en:'<strong>In your app:</strong> nightly-summary fails -> leaderboard still updates. User sees "Summaries on the way" instead of an error page.',
+             he:'<strong>באפליקציה שלך:</strong> nightly-summary נכשל → ה-leaderboard עדיין מתעדכן. המשתמש רואה "סיכומים בדרך" במקום דף שגיאה.'}
+      }
+    ]
+  },
+  {
+    id: 2, key:'dim_observability',
+    name: { en: 'Observability', he: 'Observability' },
+    desc: { en: 'You know what is happening inside', he: 'יודעים מה קורה בפנים' },
+    items: [
+      {
+        id:'o_logs', status:'done', star:false,
+        name:{en:'Logs (EF + DB)', he:'Logs (EF + DB)'},
+        what:{en:'<strong>What it is:</strong> Structured text that records what happened, when.',
+              he:'<strong>מה זה:</strong> טקסט מובנה שתיעד מה קרה מתי.'},
+        app:{en:'<strong>In your app:</strong> <code>console.log</code> in Edge Functions + <code>pg_stat_statements</code> in Supabase. Lets you answer "what happened at 3 AM when the summary failed".',
+             he:'<strong>באפליקציה שלך:</strong> <code>console.log</code> ב-Edge Functions + <code>pg_stat_statements</code> ב-Supabase. לחפש אחורה "מה קרה ב-3 בבוקר כשהסיכום נפל".'}
+      },
+      {
+        id:'o_tokens', status:'done', star:false,
+        name:{en:'Token tracking', he:'Token tracking'},
+        what:{en:'<strong>What it is:</strong> Log the token count for every LLM call.',
+              he:'<strong>מה זה:</strong> ללוג את מספר הטוקנים של כל קריאת LLM.'},
+        app:{en:'<strong>In your app:</strong> <code>input_tokens</code> and <code>output_tokens</code> columns on <code>ai_summaries</code>. Lets you compute $ per summary, per day, per group.',
+             he:'<strong>באפליקציה שלך:</strong> <code>input_tokens</code> ו-<code>output_tokens</code> ב-<code>ai_summaries</code>. מאפשר לחשב $ לסיכום, ליום, לקבוצה.'}
+      },
+      {
+        id:'o_dash', status:'todo', star:true,
+        name:{en:'Metrics dashboard', he:'Metrics dashboard'},
+        what:{en:'<strong>What it is:</strong> Visualisation of aggregate numbers over time.',
+              he:'<strong>מה זה:</strong> ויזואליזציה של מספרים מצטברים לאורך זמן.'},
+        app:{en:'<strong>In your app:</strong> The SQL we wrote (cost/day, failures, runs) -> an admin page in the app or Grafana. You see trends, not just points.',
+             he:'<strong>באפליקציה שלך:</strong> ה-SQL שלנו (cost/day, failures, runs) → דף admin באפליקציה או Grafana. רואים טרנדים, לא רק נקודות.'}
+      },
+      {
+        id:'o_alerts', status:'todo', star:false,
+        name:{en:'Alerts', he:'Alerts'},
+        what:{en:'<strong>What it is:</strong> Automatic notification when a metric crosses a threshold.',
+              he:'<strong>מה זה:</strong> התראה אוטומטית כשמטריקה חורגת מרף.'},
+        app:{en:'<strong>In your app:</strong> cron <code>SELECT COUNT(*) FROM failed_summaries WHERE resolved=false</code> — if &gt; 10, email you. You find out before users complain.',
+             he:'<strong>באפליקציה שלך:</strong> cron: <code>SELECT COUNT(*) FROM failed_summaries WHERE resolved=false</code> — אם &gt; 10, email אליך. יודע על בעיות לפני שמשתמשים מתלוננים.'}
+      },
+      {
+        id:'o_sentry', status:'todo', star:false,
+        name:{en:'Error tracking (Sentry)', he:'Error tracking (Sentry)'},
+        what:{en:'<strong>What it is:</strong> A service that catches exceptions and attaches context (user, url, stack trace, browser).',
+              he:'<strong>מה זה:</strong> service שתופס exceptions ומצרף קונטקסט (user, url, stack trace, browser).'},
+        app:{en:'<strong>In your app:</strong> React throws on the Picks page -> Sentry shows the line, the browser, and the pick state. Far beyond <code>console.error</code>.',
+             he:'<strong>באפליקציה שלך:</strong> React זורק ב-Picks page → Sentry מראה את השורה + הדפדפן + ה-state של הניחוש. מנצח <code>console.error</code>.'}
+      }
+    ]
+  },
+  {
+    id: 3, key:'dim_security',
+    name: { en: 'Security', he: 'Security' },
+    desc: { en: 'Data and access are protected', he: 'מגנים על דאטה וגישה' },
+    items: [
+      {
+        id:'s_vault', status:'done', star:true,
+        name:{en:'Secrets (Vault)', he:'Secrets (Vault)'},
+        what:{en:'<strong>What it is:</strong> Encrypted API-key storage, accessible only at runtime.',
+              he:'<strong>מה זה:</strong> אחסון מפתחות API מוצפן, נגיש רק בזמן ריצה.'},
+        app:{en:'<strong>In your app:</strong> Groq API key + API-Football key live in Supabase Vault, not in <code>.env</code> committed to git.',
+             he:'<strong>באפליקציה שלך:</strong> Groq API key + API-Football key ב-Supabase Vault, לא ב-<code>.env</code> שנכנס ל-git.'}
+      },
+      {
+        id:'s_https', status:'done', star:true,
+        name:{en:'HTTPS / SSL', he:'HTTPS / SSL'},
+        what:{en:'<strong>What it is:</strong> Encrypted traffic between the browser and the server.',
+              he:'<strong>מה זה:</strong> הצפנת תעבורה בין דפדפן לשרת.'},
+        app:{en:'<strong>In your app:</strong> GitHub Pages gives HTTPS for free. Without it, anyone on the same Wi-Fi can sniff login tokens.',
+             he:'<strong>באפליקציה שלך:</strong> GitHub Pages נותן HTTPS אוטומטית. בלי זה, מישהו על WiFi יכול לצותת ל-login tokens של המשתמשים.'}
+      },
+      {
+        id:'s_rls', status:'done', star:false,
+        name:{en:'Auth + RLS', he:'Auth + RLS'},
+        what:{en:'<strong>What it is:</strong> User authentication + data-boundary enforcement inside the DB itself.',
+              he:'<strong>מה זה:</strong> אימות משתמש + אכיפת גבולות דאטה ברמת ה-DB עצמה.'},
+        app:{en:'<strong>In your app:</strong> RLS policy <code>SELECT predictions WHERE user_id = auth.uid()</code> — user A cannot see user B\'s picks, even if they bypass the frontend.',
+             he:'<strong>באפליקציה שלך:</strong> RLS policy <code>SELECT predictions WHERE user_id = auth.uid()</code> — משתמש א\' לא יכול לראות ניחושים של משתמש ב\', גם אם יעקוף את ה-frontend.'}
+      },
+      {
+        id:'s_jwt', status:'partial', star:true,
+        name:{en:'JWT', he:'JWT'},
+        what:{en:'<strong>What it is:</strong> A signed token that proves "this user is authenticated" without a DB lookup on every request.',
+              he:'<strong>מה זה:</strong> token חתום שמוכיח "המשתמש מאומת" בלי לגשת ל-DB בכל בקשה.'},
+        app:{en:'<strong>In your app:</strong> Supabase issues a JWT on login; the frontend sends it in every request header; Edge Functions verify the signature locally (fast).',
+             he:'<strong>באפליקציה שלך:</strong> Supabase מנפיק JWT ב-login; frontend שולח בכל request header; EF מאמת את החתימה מקומית (מהיר).'}
+      },
+      {
+        id:'s_zt', status:'partial', star:true,
+        name:{en:'Zero-Trust', he:'Zero-Trust'},
+        what:{en:'<strong>What it is:</strong> Assume every request is hostile, authenticate at every layer. Do not "trust because it is internal".',
+              he:'<strong>מה זה:</strong> להניח שכל בקשה עוינת, לאמת בכל שכבה. לא "סומכים כי זה פנימי".'},
+        app:{en:'<strong>In your app:</strong> An EF does not trust <code>user_id</code> in the request body — it re-derives it from the JWT and RLS double-checks.',
+             he:'<strong>באפליקציה שלך:</strong> EF לא סומך על <code>user_id</code> ב-request body — גוזר אותו מחדש מה-JWT ובודק RLS.'}
+      }
+    ]
+  },
+  {
+    id: 4, key:'dim_deployability',
+    name: { en: 'Deployability', he: 'Deployability' },
+    desc: { en: 'Ship and roll back without drama', he: 'מעלים ומחזירים בלי דרמה' },
+    items: [
+      {
+        id:'d_mig', status:'done', star:false,
+        name:{en:'Migrations', he:'Migrations'},
+        what:{en:'<strong>What it is:</strong> Versioned schema changes — every DB change is a SQL file.',
+              he:'<strong>מה זה:</strong> שינויי schema versioned — כל שינוי ב-DB הוא קובץ SQL.'},
+        app:{en:'<strong>In your app:</strong> 56 migrations. If you blow up prod, you can replay them on a fresh DB and return to a healthy state.',
+             he:'<strong>באפליקציה שלך:</strong> 56 migrations. אם תפוצץ את ה-prod, אפשר להריץ אותן על DB חדש ולחזור למצב תקין.'}
+      },
+      {
+        id:'d_pr', status:'partial', star:false,
+        name:{en:'Branches + PRs', he:'Branches + PRs'},
+        what:{en:'<strong>What it is:</strong> Isolate features on branches, review before merge.',
+              he:'<strong>מה זה:</strong> לבודד פיצ\'ר ב-branch, לסקור לפני merge.'},
+        app:{en:'<strong>In your app:</strong> <code>feature/nightly-summary</code> — develop, push, PR, review, merge to main. main stays clean. (The one spot still rough after the Cursor auto-merge incident.)',
+             he:'<strong>באפליקציה שלך:</strong> <code>feature/nightly-summary</code> — מפתחים, push, PR, review, merge ל-main. main נשאר נקי. (המקום היחיד שעוד לא מושלם אחרי incident ה-auto-merge של Cursor.)'}
+      },
+      {
+        id:'d_cicd', status:'todo', star:true,
+        name:{en:'CI/CD', he:'CI/CD'},
+        what:{en:'<strong>What it is:</strong> Automated pipeline: push -> tests -> deploy.',
+              he:'<strong>מה זה:</strong> pipeline אוטומטי: push → tests → deploy.'},
+        app:{en:'<strong>In your app:</strong> GitHub Actions on push to main -> runs tests -> deploys to GitHub Pages. You just push; deploy happens on its own.',
+             he:'<strong>באפליקציה שלך:</strong> GitHub Actions על push ל-main → מריץ tests → deploy ל-GitHub Pages. אתה רק pusher; deploy קורה לבד.'}
+      },
+      {
+        id:'d_docker', status:'todo', star:true,
+        name:{en:'Docker', he:'Docker'},
+        what:{en:'<strong>What it is:</strong> Packages the app plus all its dependencies into a container that runs anywhere.',
+              he:'<strong>מה זה:</strong> אריזת app + כל התלויות שלו ב-container שרץ בכל מקום.'},
+        app:{en:'<strong>In your app:</strong> Not critical — GitHub Pages + Supabase = serverless. Relevant only if you self-host or need reproducible dev envs.',
+             he:'<strong>באפליקציה שלך:</strong> לא קריטי — GitHub Pages + Supabase = serverless. ירלוונטי אם תארח בעצמך או תצטרך reproducibility של dev env.'}
+      },
+      {
+        id:'d_adr', status:'todo', star:true,
+        name:{en:'ADR', he:'ADR'},
+        what:{en:'<strong>What it is:</strong> Architecture Decision Record — a short doc explaining "why we chose X over Y".',
+              he:'<strong>מה זה:</strong> Architecture Decision Record — מסמך קצר שמסביר "למה בחרנו X על פני Y".'},
+        app:{en:'<strong>In your app:</strong> "Why Groq and not OpenAI?" — latency, cost, format. "Future-you" reads it and does not reverse the decision by accident.',
+             he:'<strong>באפליקציה שלך:</strong> "למה Groq ולא OpenAI?" — latency, cost, format. "You-עתידי" קורא ולא מבטל את ההחלטה בטעות.'}
+      }
+    ]
+  },
+  {
+    id: 5, key:'dim_scalability',
+    name: { en: 'Scalability', he: 'Scalability' },
+    desc: { en: 'Handles load and growth', he: 'מחזיק עומס וגדילה' },
+    items: [
+      {
+        id:'sc_cdn', status:'done', star:true,
+        name:{en:'CDN', he:'CDN'},
+        what:{en:'<strong>What it is:</strong> Content Delivery Network — copies of static files cached across geographic locations. Users get theirs from the nearest edge.',
+              he:'<strong>מה זה:</strong> Content Delivery Network — עותקים של קבצים סטטיים במספר מיקומים גיאוגרפיים. משתמש מקבל מהקרוב.'},
+        app:{en:'<strong>In your app:</strong> GitHub Pages runs on Fastly CDN. A user in Tel Aviv loads from a Tel Aviv edge, not from GitHub HQ.',
+             he:'<strong>באפליקציה שלך:</strong> GitHub Pages משתמש ב-Fastly CDN. משתמש בתל אביב טוען מ-edge תל אביב, לא מ-HQ של GitHub.'}
+      },
+      {
+        id:'sc_pool', status:'done', star:false,
+        name:{en:'Connection pool', he:'Connection pool'},
+        what:{en:'<strong>What it is:</strong> Reuse DB connections instead of opening one per request.',
+              he:'<strong>מה זה:</strong> שימוש חוזר ב-DB connections במקום לפתוח אחד לכל request.'},
+        app:{en:'<strong>In your app:</strong> Supabase PgBouncer — 1000 concurrent users do not need 1000 open connections; the pool manages ~20.',
+             he:'<strong>באפליקציה שלך:</strong> Supabase PgBouncer — 1000 משתמשים סימולטניים לא צריכים 1000 connections פתוחים; pool מנהל ~20.'}
+      },
+      {
+        id:'sc_index', status:'partial', star:true,
+        name:{en:'DB Indexing', he:'DB Indexing'},
+        what:{en:'<strong>What it is:</strong> A data structure that turns queries O(log n) instead of O(n).',
+              he:'<strong>מה זה:</strong> data structure שהופך queries ל-O(log n) במקום O(n).'},
+        app:{en:'<strong>In your app:</strong> An index on <code>predictions(game_id)</code> — "all predictions for game X" — DB jumps straight in, does not scan 10 000 rows.',
+             he:'<strong>באפליקציה שלך:</strong> index על <code>predictions(game_id)</code> — "כל הניחושים למשחק X" — DB קופץ ישר, לא סורק 10,000 שורות.'}
+      },
+      {
+        id:'sc_query', status:'partial', star:false,
+        name:{en:'Query optimization', he:'Query optimization'},
+        what:{en:'<strong>What it is:</strong> Speed up SQL — smart joins, projections, avoid N+1.',
+              he:'<strong>מה זה:</strong> להאיץ SQL — joins חכמים, projections, הימנעות מ-N+1.'},
+        app:{en:'<strong>In your app:</strong> Today <code>SELECT group_id FROM predictions WHERE user_id=X</code> runs in a loop = N+1. Fix: a single JOIN.',
+             he:'<strong>באפליקציה שלך:</strong> יש לך <code>SELECT group_id FROM predictions WHERE user_id=X</code> בלולאה = N+1. תיקון: JOIN אחד במקום.'}
+      },
+      {
+        id:'sc_cache', status:'todo', star:false,
+        name:{en:'Caching', he:'Caching'},
+        what:{en:'<strong>What it is:</strong> Store the result of an expensive computation and return the cached copy on a repeat request.',
+              he:'<strong>מה זה:</strong> שמירת תוצאות חישוב יקר, החזרת עותק על פנייה חוזרת.'},
+        app:{en:'<strong>In your app:</strong> Leaderboard is recomputed every page load -> cache in Redis or a materialised view for 30 seconds, recompute after.',
+             he:'<strong>באפליקציה שלך:</strong> leaderboard מחושב מחדש בכל page load → cache ב-Redis או materialized view ל-30 שניות, חישוב מחדש אחרי.'}
+      }
+    ]
+  },
+  {
+    id: 6, key:'dim_durability',
+    name: { en: 'Durability', he: 'Durability' },
+    desc: { en: 'Data survives disasters', he: 'דאטה שורד אסונות' },
+    items: [
+      {
+        id:'du_backup', status:'done', star:true,
+        name:{en:'Backups (Supabase)', he:'Backups (Supabase)'},
+        what:{en:'<strong>What it is:</strong> Automatic DB snapshots retained for N days.',
+              he:'<strong>מה זה:</strong> snapshots אוטומטיים של ה-DB, נשמרים N ימים.'},
+        app:{en:'<strong>In your app:</strong> Supabase PITR (Point-in-Time Recovery) — 7 days on free tier. If you drop a table by mistake, you can restore.',
+             he:'<strong>באפליקציה שלך:</strong> Supabase PITR (Point-in-Time Recovery) — 7 ימים ב-free tier. אם הפלת טבלה בטעות, תוכל לשחזר.'}
+      },
+      {
+        id:'du_repl', status:'done', star:false,
+        name:{en:'Replication', he:'Replication'},
+        what:{en:'<strong>What it is:</strong> A DB copy updated in real time. Failover kicks in if the primary dies.',
+              he:'<strong>מה זה:</strong> עותק של DB מתעדכן בזמן אמת. failover אם ה-primary נופל.'},
+        app:{en:'<strong>In your app:</strong> Supabase runs replicas in the background. If the primary crashes, a replica takes over.',
+             he:'<strong>באפליקציה שלך:</strong> Supabase מריץ replicas ברקע. גם אם primary קורס, replica קופץ פנימה.'}
+      },
+      {
+        id:'du_dr', status:'todo', star:false,
+        name:{en:'DR plan', he:'DR plan'},
+        what:{en:'<strong>What it is:</strong> Disaster Recovery — a written doc: "if the DB goes down, we do X, Y, Z".',
+              he:'<strong>מה זה:</strong> Disaster Recovery — מסמך כתוב: "אם DB נופל, עושים X, Y, Z".'},
+        app:{en:'<strong>In your app:</strong> "Restore backup + update Supabase URL in every EF + notify users". You do not have one yet — write 5 lines before the World Cup.',
+             he:'<strong>באפליקציה שלך:</strong> "שחזר backup + עדכן Supabase URL בכל ה-EFs + הודע למשתמשים". אין לך כזה עדיין — כדאי לרשום 5 שורות לפני המונדיאל.'}
+      },
+      {
+        id:'du_ret', status:'todo', star:false,
+        name:{en:'Data retention', he:'Data retention'},
+        what:{en:'<strong>What it is:</strong> Rules about what you keep, what you delete, and for how long.',
+              he:'<strong>מה זה:</strong> כללים מה שומרים ומה מוחקים, ולכמה זמן.'},
+        app:{en:'<strong>In your app:</strong> "Predictions — 2 years; auth logs — 90 days". Partly legal (GDPR), partly storage cost.',
+             he:'<strong>באפליקציה שלך:</strong> "ניחושים — 2 שנים; auth logs — 90 יום". חלק מזה legal (GDPR), חלק עלויות אחסון.'}
+      },
+      {
+        id:'du_dns', status:'todo', star:true,
+        name:{en:'DNS failover', he:'DNS failover'},
+        what:{en:'<strong>What it is:</strong> If a server dies, DNS redirects users to a backup server.',
+              he:'<strong>מה זה:</strong> אם שרת נופל, DNS מפנה משתמשים לשרת backup.'},
+        app:{en:'<strong>In your app:</strong> Not critical — the GitHub Pages CDN handles it. Only relevant if you self-host a server.',
+             he:'<strong>באפליקציה שלך:</strong> לא קריטי — GitHub Pages CDN מטפל. ירלוונטי רק אם תארח שרת בעצמך.'}
+      }
+    ]
+  },
+  {
+    id: 7, key:'dim_cost',
+    name: { en: 'Cost & Governance', he: 'Cost & Governance' },
+    desc: { en: 'Sustainable and legal', he: 'בר קיימא וחוקי' },
+    items: [
+      {
+        id:'c_cost', status:'done', star:false,
+        name:{en:'Token cost tracking', he:'Token cost tracking'},
+        what:{en:'<strong>What it is:</strong> Record how much each LLM call cost.',
+              he:'<strong>מה זה:</strong> לרשום כמה עלתה כל קריאת LLM.'},
+        app:{en:'<strong>In your app:</strong> <code>input_tokens * 0.00015 + output_tokens * 0.0006</code> per row — you know daily cost, monthly cost, and cost per group.',
+             he:'<strong>באפליקציה שלך:</strong> <code>input_tokens * 0.00015 + output_tokens * 0.0006</code> לכל שורה — יודע עלות יומית, חודשית, ולכל קבוצה.'}
+      },
+      {
+        id:'c_budget', status:'todo', star:false,
+        name:{en:'Budget alerts', he:'Budget alerts'},
+        what:{en:'<strong>What it is:</strong> A notification when spend crosses a threshold.',
+              he:'<strong>מה זה:</strong> התראה כשההוצאה חורגת מרף.'},
+        app:{en:'<strong>In your app:</strong> cron <code>SUM(cost) last 7 days</code> — if &gt; $50, email you. Stops runaway costs (a prompt stuck in a loop).',
+             he:'<strong>באפליקציה שלך:</strong> cron: <code>SUM(cost) last 7 days</code> — אם &gt; $50, email. מונע runaway costs (פרומפט תקוע בלולאה).'}
+      },
+      {
+        id:'c_cpu', status:'todo', star:false,
+        name:{en:'Cost per user', he:'Cost per user'},
+        what:{en:'<strong>What it is:</strong> Unit economics — how much does one user cost per month?',
+              he:'<strong>מה זה:</strong> unit economics — כמה עולה לך משתמש לחודש?'},
+        app:{en:'<strong>In your app:</strong> (Supabase $20 + LLM costs) / MAU. Say $0.20/user. Becomes critical the day you want to charge.',
+             he:'<strong>באפליקציה שלך:</strong> (Supabase $20 + LLM costs) / MAU. נניח $0.20/user. קריטי אם תרצה לגבות פעם.'}
+      },
+      {
+        id:'c_priv', status:'todo', star:false,
+        name:{en:'Privacy / ToS', he:'Privacy / ToS'},
+        what:{en:'<strong>What it is:</strong> Terms of Service and Privacy Policy pages.',
+              he:'<strong>מה זה:</strong> דפי Terms of Service ו-Privacy Policy.'},
+        app:{en:'<strong>In your app:</strong> You must state what you collect (email, picks), how you use it, and with whom you share (Groq sees match data). GDPR fine without.',
+             he:'<strong>באפליקציה שלך:</strong> חייב לציין מה אוסף (email, ניחושים), איך משתמש, עם מי משתף (Groq רואה דאטה משחקים). GDPR fine בלי.'}
+      },
+      {
+        id:'c_comp', status:'todo', star:false,
+        name:{en:'Compliance', he:'Compliance'},
+        what:{en:'<strong>What it is:</strong> Regulatory rules (GDPR for EU, PCI for payments).',
+              he:'<strong>מה זה:</strong> חוקים רגולטוריים (GDPR ל-EU, PCI לתשלומים).'},
+        app:{en:'<strong>In your app:</strong> EU users -> GDPR -> you must allow data deletion on request. Not a serious problem until ~100 users.',
+             he:'<strong>באפליקציה שלך:</strong> משתמשים ב-EU → GDPR → חייב לאפשר מחיקת דאטה על בקשה. לא בעיה ברצינות עד 100 משתמשים.'}
+      }
+    ]
+  }
+];
+
+/* ====== Translations for UI strings ====== */
+const T = {
+  en: {
+    hero_title: 'Demo to Production',
+    hero_subtitle: '7 dimensions that turn a demo into a living system — explore your readiness live.',
+    hero_hint: 'Flip any toggle to see the score move. Click a concept name for the explanation.',
+    legend_done: 'Shipped',
+    legend_partial: 'Partial',
+    legend_todo: 'Not yet',
+    legend_star: 'Flagged in your checklist',
+    score_label: 'readiness',
+    score_title: 'Production Readiness',
+    score_subtitle: 'Each Done = 1.0, each Partial = 0.5, each Todo = 0. Averaged across 35 concepts.',
+    count_done: 'done',
+    count_partial: 'partial',
+    count_todo: 'todo',
+    bars_title: 'Per-dimension readiness',
+    btn_reset: 'Reset to current state',
+    btn_all_done: 'Mark all done (what-if)',
+    btn_all_todo: 'Clear all',
+    grid_title: 'The 7 Dimensions',
+    grid_intro: 'Click a concept name for the explanation and an example from your app. Click a status badge (Done / Partial / Todo) to cycle it — both gauges above update live.',
+    takeaways_title: 'Key Takeaways',
+    tk1: '<strong>Demo and Production are different sports.</strong> A demo only has to work once, on a happy path. Production has to keep working under failure, load, breaches, and boring Tuesday mornings.',
+    tk2: '<strong>Seven dimensions, not a checklist.</strong> Reliability, Observability, Security, Deployability, Scalability, Durability, Cost & Governance. Each one is a separate muscle — fix the weakest first.',
+    tk3: "<strong>You're already strong on Reliability and Security.</strong> Your soft spots before the World Cup are Observability (metrics/alerts/Sentry) and Cost governance. Those are what'll bite you at 2 AM.",
+    tk4: '<strong>Not everything must ship before launch.</strong> Use the toggles as a prioritisation tool: if a "what-if all done" score jump comes cheap, do it first. If expensive (Docker, full CI/CD), park it for post-launch.',
+    tk5: '<strong>Write the 5-line DR plan now.</strong> Backups exist, but "what we do when they are needed" does not. Five lines in a README beats a perfect plan you never write.',
+    footer_strong: 'This is a map, not a menu.',
+    footer_text: " Use the toggles to simulate what-if scenarios before the World Cup. Next meeting we'll pick together what must ship before launch and what can wait.",
+    status_done: 'Done',
+    status_partial: 'Partial',
+    status_todo: 'Todo',
+    dim_progress_text: (done, total) => `${done.toFixed(1)} / ${total} concepts`
+  },
+  he: {
+    hero_title: 'Demo → Production',
+    hero_subtitle: '7 ממדים שהופכים דמו למערכת חיה — חקור את רמת המוכנות שלך חי.',
+    hero_hint: 'שנה כל toggle וראה איך הציון זז. לחץ על שם מושג להסבר.',
+    legend_done: 'יש באפליקציה',
+    legend_partial: 'חלקי',
+    legend_todo: 'עוד לא',
+    legend_star: 'איתי סימן בצ\'קליסט',
+    score_label: 'מוכנות',
+    score_title: 'Production Readiness',
+    score_subtitle: 'כל Done = 1.0, כל Partial = 0.5, כל Todo = 0. ממוצע על פני 35 מושגים.',
+    count_done: 'מוכן',
+    count_partial: 'חלקי',
+    count_todo: 'טרם',
+    bars_title: 'מוכנות לפי ממד',
+    btn_reset: 'חזרה למצב הנוכחי',
+    btn_all_done: 'הכל Done (what-if)',
+    btn_all_todo: 'אפס הכל',
+    grid_title: '7 הממדים',
+    grid_intro: 'לחץ על שם מושג כדי לראות הסבר ודוגמה מהאפליקציה שלך. לחץ על תג הסטטוס (Done / Partial / Todo) כדי לעבור ביניהם — שתי התצוגות למעלה מתעדכנות בזמן אמת.',
+    takeaways_title: 'מסקנות מפתח',
+    tk1: '<strong>Demo ו-Production הם ספורט אחר.</strong> דמו צריך לעבוד פעם אחת, במסלול מאושר. Production חייב להמשיך לעבוד תחת כשל, עומס, פריצות, ויום שלישי משעמם.',
+    tk2: '<strong>7 ממדים, לא צ\'קליסט.</strong> Reliability, Observability, Security, Deployability, Scalability, Durability, Cost & Governance. כל אחד שריר נפרד — תקן את החלש תחילה.',
+    tk3: '<strong>אתה כבר חזק ב-Reliability וב-Security.</strong> הנקודות הרכות לפני המונדיאל הן Observability (metrics/alerts/Sentry) ו-Cost governance. זה מה שיעצבן ב-2 בלילה.',
+    tk4: '<strong>לא הכל חייב לעלות לפני הלאנץ\'.</strong> השתמש ב-toggles ככלי תעדוף: אם "הכל Done" קופץ זול — תעשה קודם. אם יקר (Docker, CI/CD מלא) — אחרי הלאנץ\'.',
+    tk5: '<strong>תכתוב את תכנית ה-DR של 5 שורות עכשיו.</strong> Backups קיימים, אבל "מה עושים כשצריך אותם" לא. 5 שורות ב-README עדיפות על תכנית מושלמת שלא תכתוב.',
+    footer_strong: 'זאת מפה, לא תפריט.',
+    footer_text: ' השתמש ב-toggles כדי לסמלץ תרחישי what-if לפני המונדיאל. במפגש הבא נבחר יחד מה חייב לעלות לפני הלאנץ\' ומה אחרי.',
+    status_done: 'Done',
+    status_partial: 'Partial',
+    status_todo: 'Todo',
+    dim_progress_text: (done, total) => `${done.toFixed(1)} / ${total} מושגים`
+  }
+};
+
+/* ====== State ====== */
+let currentLang = 'en';
+const STORAGE_KEY = 'prodReadinessLang';
+
+// Persisted user status per-item. Starts as a clone of initial statuses.
+const INITIAL_STATUS = {};
+DIMENSIONS.forEach(d => d.items.forEach(it => { INITIAL_STATUS[it.id] = it.status; }));
+let STATUS = Object.assign({}, INITIAL_STATUS);
+
+const STATUS_ORDER = ['todo','partial','done'];
+const STATUS_WEIGHT = { done: 1, partial: 0.5, todo: 0 };
+
+/* ====== Rendering ====== */
+function renderGrid() {
+  const grid = document.getElementById('dimGrid');
+  grid.innerHTML = '';
+  DIMENSIONS.forEach(dim => {
+    const card = document.createElement('div');
+    card.className = 'dim-card';
+    card.setAttribute('data-c', dim.id);
+
+    const numStr = String(dim.id).padStart(2, '0');
+    card.innerHTML = `
+      <div class="dim-head">
+        <span class="dim-num">${numStr}</span>
+        <h3 data-i18n="${dim.key}_name">${dim.name.en}</h3>
+      </div>
+      <div class="dim-desc" data-i18n="${dim.key}_desc">${dim.desc.en}</div>
+      <div class="dim-progress" data-progress-for="${dim.id}"></div>
+      <div class="concepts"></div>
+    `;
+
+    const conceptsEl = card.querySelector('.concepts');
+    dim.items.forEach(item => {
+      const wrap = document.createElement('div');
+      wrap.className = 'concept';
+      wrap.id = 'concept-' + item.id;
+
+      const head = document.createElement('div');
+      head.className = 'concept-head';
+      head.setAttribute('role', 'button');
+      head.setAttribute('tabindex', '0');
+      head.setAttribute('aria-expanded', 'false');
+      head.innerHTML = `
+        <button type="button" class="status-btn" data-s="${STATUS[item.id]}" data-item="${item.id}" aria-label="status"></button>
+        <span class="concept-label">
+          <span data-i18n="${item.id}_name">${item.name.en}</span>
+          ${item.star ? ' <span class="star">&#9733;</span>' : ''}
+        </span>
+        <span class="chev">&#8250;</span>
+      `;
+      const toggleConcept = () => {
+        wrap.classList.toggle('open');
+        head.setAttribute('aria-expanded', wrap.classList.contains('open') ? 'true' : 'false');
+      };
+      head.addEventListener('click', (ev) => {
+        if (ev.target.closest('.status-btn')) return; // status button handles itself
+        toggleConcept();
+      });
+      head.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          toggleConcept();
+        }
+      });
+
+      const body = document.createElement('div');
+      body.className = 'concept-body';
+      body.innerHTML = `
+        <p data-i18n="${item.id}_what">${item.what.en}</p>
+        <p data-i18n="${item.id}_app">${item.app.en}</p>
+      `;
+
+      wrap.appendChild(head);
+      wrap.appendChild(body);
+      conceptsEl.appendChild(wrap);
+
+      const statusBtn = head.querySelector('.status-btn');
+      statusBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        cycleStatus(item.id);
+      });
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+function renderDimBars() {
+  const el = document.getElementById('dimBars');
+  el.innerHTML = '';
+  DIMENSIONS.forEach(dim => {
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    const numStr = String(dim.id).padStart(2, '0');
+    row.innerHTML = `
+      <div class="bar-label"><span class="num">${numStr}</span><span data-i18n="${dim.key}_name">${dim.name.en}</span></div>
+      <div class="bar-track"><div class="bar-fill" data-c="${dim.id}" data-bar="${dim.id}" style="width:0%"></div></div>
+      <div class="bar-pct" data-pct="${dim.id}">0%</div>
+    `;
+    el.appendChild(row);
+  });
+}
+
+/* ====== Interactions ====== */
+function cycleStatus(itemId) {
+  const curr = STATUS[itemId];
+  const idx = STATUS_ORDER.indexOf(curr);
+  const next = STATUS_ORDER[(idx + 1) % STATUS_ORDER.length];
+  STATUS[itemId] = next;
+  // update button look + label
+  const btns = document.querySelectorAll(`.status-btn[data-item="${itemId}"]`);
+  btns.forEach(b => {
+    b.setAttribute('data-s', next);
+    b.textContent = T[currentLang]['status_' + next];
+  });
+  recompute();
+}
+
+function setAll(status) {
+  DIMENSIONS.forEach(d => d.items.forEach(it => { STATUS[it.id] = status; }));
+  // refresh every status button
+  document.querySelectorAll('.status-btn').forEach(b => {
+    const id = b.getAttribute('data-item');
+    b.setAttribute('data-s', STATUS[id]);
+    b.textContent = T[currentLang]['status_' + STATUS[id]];
+  });
+  recompute();
+}
+
+function resetToInitial() {
+  STATUS = Object.assign({}, INITIAL_STATUS);
+  document.querySelectorAll('.status-btn').forEach(b => {
+    const id = b.getAttribute('data-item');
+    b.setAttribute('data-s', STATUS[id]);
+    b.textContent = T[currentLang]['status_' + STATUS[id]];
+  });
+  recompute();
+}
+
+/* ====== Recompute & update visuals ====== */
+function recompute() {
+  let totalScore = 0;
+  let totalItems = 0;
+  let counts = { done: 0, partial: 0, todo: 0 };
+
+  DIMENSIONS.forEach(dim => {
+    let dimScore = 0;
+    dim.items.forEach(it => {
+      const s = STATUS[it.id];
+      counts[s]++;
+      const w = STATUS_WEIGHT[s];
+      dimScore += w;
+      totalScore += w;
+      totalItems++;
+    });
+    const pct = Math.round((dimScore / dim.items.length) * 100);
+    const bar = document.querySelector(`.bar-fill[data-bar="${dim.id}"]`);
+    const pctLbl = document.querySelector(`[data-pct="${dim.id}"]`);
+    if (bar) bar.style.width = pct + '%';
+    if (pctLbl) pctLbl.textContent = pct + '%';
+
+    const progLbl = document.querySelector(`[data-progress-for="${dim.id}"]`);
+    if (progLbl) {
+      progLbl.innerHTML = `<span class="big">${pct}%</span> — ${T[currentLang].dim_progress_text(dimScore, dim.items.length)}`;
+    }
+  });
+
+  const overall = Math.round((totalScore / totalItems) * 100);
+  document.getElementById('scoreNum').textContent = overall;
+
+  const ring = document.getElementById('gaugeRing');
+  const C = 2 * Math.PI * 76; // ~477.5
+  ring.setAttribute('stroke-dasharray', C.toFixed(2));
+  ring.setAttribute('stroke-dashoffset', (C * (1 - overall / 100)).toFixed(2));
+
+  document.getElementById('countDone').textContent = counts.done;
+  document.getElementById('countPartial').textContent = counts.partial;
+  document.getElementById('countTodo').textContent = counts.todo;
+}
+
+/* ====== Language toggle ====== */
+function setLang(lang) {
+  currentLang = lang;
+  const html = document.documentElement;
+  html.lang = lang;
+  html.dir = lang === 'he' ? 'rtl' : 'ltr';
+  try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
+
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-he').classList.toggle('active', lang === 'he');
+
+  // Top-level UI strings
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    // Check per-dimension name
+    if (T[lang][key] !== undefined) {
+      el.innerHTML = T[lang][key];
+      return;
+    }
+    // dimension name / desc
+    const dimMatch = key.match(/^(dim_[a-z]+)_(name|desc)$/);
+    if (dimMatch) {
+      const dim = DIMENSIONS.find(d => d.key === dimMatch[1]);
+      if (dim) el.innerHTML = dimMatch[2] === 'name' ? dim.name[lang] : dim.desc[lang];
+      return;
+    }
+    // item name / what / app
+    const itemMatch = key.match(/^(.+)_(name|what|app)$/);
+    if (itemMatch) {
+      const id = itemMatch[1];
+      let found = null;
+      for (const d of DIMENSIONS) { for (const it of d.items) { if (it.id === id) { found = it; break; } } if (found) break; }
+      if (found) {
+        if (itemMatch[2] === 'name') el.innerHTML = found.name[lang];
+        if (itemMatch[2] === 'what') el.innerHTML = found.what[lang];
+        if (itemMatch[2] === 'app')  el.innerHTML = found.app[lang];
+      }
+    }
+  });
+
+  // Refresh status-btn labels
+  document.querySelectorAll('.status-btn').forEach(b => {
+    const id = b.getAttribute('data-item');
+    b.textContent = T[lang]['status_' + STATUS[id]];
+  });
+
+  // Refresh per-dim progress text (uses a function, not a plain string)
+  recompute();
+}
+
+/* ====== Init ====== */
+document.addEventListener('DOMContentLoaded', () => {
+  renderGrid();
+  renderDimBars();
+  // label each status button with current language text
+  document.querySelectorAll('.status-btn').forEach(b => {
+    const id = b.getAttribute('data-item');
+    b.textContent = T[currentLang]['status_' + STATUS[id]];
+  });
+  recompute();
+  // Restore language preference
+  let saved = 'en';
+  try { saved = localStorage.getItem(STORAGE_KEY) || 'en'; } catch (e) {}
+  setLang(saved);
+});
+</script>
+
+</body>
+</html>
