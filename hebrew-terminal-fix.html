@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>תיקון עברית ב-Windows Terminal - מדריך התקנה</title>
+  <title>תיקון עברית ב-Claude Code על Windows - שתי שיטות</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: #1a1a2e; line-height: 1.7; padding: 20px; }
@@ -47,8 +47,8 @@
 <body>
   <div class="container">
 
-    <h1>תיקון עברית ב-Windows Terminal</h1>
-    <p class="subtitle">מדריך התקנת Terminal 1.18 — הגרסה האחרונה שמציגה עברית נכון</p>
+    <h1>תיקון עברית ב-Claude Code על Windows</h1>
+    <p class="subtitle">שתי שיטות לעבודה נקייה בעברית — בחרו לפי סביבת העבודה שלכם</p>
 
     <!-- Problem -->
     <h2>הבעיה</h2>
@@ -73,8 +73,9 @@
       </div>
     </div>
 
-    <!-- Installation -->
-    <h2>התקנה</h2>
+    <!-- Method 1: Windows Terminal 1.18 -->
+    <h2>שיטה 1 — Windows Terminal 1.18</h2>
+    <p>החלפת Terminal לגרסה 1.18 — הגרסה האחרונה שמציגה עברית נכון. מתאים לעבודה ישירה ב-Windows Terminal.</p>
 
     <div class="card">
       <h3>שלב 1 — הורדה והתקנה</h3>
@@ -130,8 +131,40 @@
       <p><strong>עברית תקינה!</strong> Terminal 1.18 מציג עברית נכון — לא הפוך.</p>
     </div>
 
+    <!-- Method 2: VS Code Extension -->
+    <h2>שיטה 2 — Extension ל-VS Code</h2>
+    <p>עובדים עם Claude Code בתוך הטרמינל המשולב של VS Code? יש פתרון נקי ופשוט — תוסף ייעודי שמסדר את העברית אוטומטית, בלי להחליף גרסת Terminal.</p>
+
+    <div class="card card-yellow">
+      <h3>פתרון חלקי (אופציונלי): הוראת RTL לקלוד</h3>
+      <p>אפשר להגיד לקלוד <strong>"תכתוב בעברית מצד ימין לשמאל"</strong> — הוא יעטוף כל תשובה ב-<code dir="ltr">&lt;div dir="rtl"&gt;</code>. עוזר חלקית, אבל התגיות מופיעות בתשובה והטקסט עדיין לא מסודר ב-100%. <strong>מומלץ לדלג ישר ל-Extension למטה.</strong></p>
+    </div>
+
+    <div class="card">
+      <h3>התקנת ה-Extension</h3>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <p>פתחו את <strong>VS Code</strong> ולחצו על אייקון ה-Extensions בצד (או <code dir="ltr">Ctrl+Shift+X</code>).</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <p>חפשו <strong dir="ltr">yechielby</strong> והתקינו את <strong dir="ltr">Claude Code RTL Support</strong> מאת Yechiel Bar-Yehuda.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <p>בשורת המצב התחתונה של VS Code לחצו על <strong dir="ltr">RTL: Active</strong> ובחרו <strong dir="ltr">Activate RTL (Always)</strong> — כך התוסף יפעל תמיד ולא צריך להפעיל אותו בכל סשן מחדש.</p>
+      </div>
+    </div>
+
+    <div class="card card-green">
+      <p><strong>זהו!</strong> כל תשובה בעברית תיכתב מסודר לימין, נקי וקריא. תוסף קטן, חינמי, ועושה הבדל גדול.</p>
+    </div>
+
     <!-- Troubleshooting: Button not working -->
-    <h2>פתרון בעיות</h2>
+    <h2>פתרון בעיות (שיטה 1)</h2>
 
     <div class="card card-yellow">
       <h3>הכפתור "Open in Terminal" לא פותח טרמינל?</h3>
@@ -189,8 +222,8 @@
     </div>
 
     <div class="credit">
-      <p>המדריך המקורי נבנה על ידי <a href="https://www.facebook.com/lior.levi26" target="_blank">Lior Levi</a></p>
-      <p><a href="https://win-terminal-hebrew-118.base44.app/" target="_blank">לאתר המקורי</a></p>
+      <p>המדריך המקורי על Terminal 1.18 נבנה על ידי <a href="https://www.facebook.com/lior.levi26" target="_blank">Lior Levi</a> — <a href="https://win-terminal-hebrew-118.base44.app/" target="_blank">לאתר המקורי</a></p>
+      <p>תוסף <strong>Claude Code RTL Support</strong> ל-VS Code פותח על ידי <strong>Yechiel Bar-Yehuda</strong> 🙏</p>
     </div>
 
   </div>
